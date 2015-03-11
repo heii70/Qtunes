@@ -41,7 +41,7 @@ MainWindow::MainWindow	(QString program)
 	createActions();	// create actions for each menu item
 	createMenus  ();	// create menus and associate actions
 	createWidgets();	// create window widgets
-	createButtons(); 
+	//createButtons(); 
 	createLayouts();	// create widget layouts
 	m_mediaplayer = new QMediaPlayer;
 	// populate the list widgets with music library data
@@ -60,11 +60,9 @@ MainWindow::MainWindow	(QString program)
 	resize(900, 600);
 	connect(m_stop, SIGNAL(clicked()),
 		m_mediaplayer, SLOT(stop()));
-	/*connect(m_play, SIGNAL(clicked()),
-		this, SLOT(s_play(m_table->currentItem())));*/
 	connect(m_play, SIGNAL(clicked()),
 		this, SLOT(s_playbutton()));	
-    connect(m_pause, SIGNAL(clicked()),
+	connect(m_pause, SIGNAL(clicked()),
         this, SLOT(s_pausebutton()));
 	connect(m_nextsong, SIGNAL(clicked()),
 		this, SLOT(s_nextsong()));
@@ -183,7 +181,7 @@ MainWindow::createWidgets()
 		this,		  SLOT(s_play	  (QTableWidgetItem*)));
 }
 
-void MainWindow::createButtons(){
+//void MainWindow::createButtons(){
 	/*m_stop = new QPushButton("Stop");
 	m_play = new QPushButton("Play");
 	/*connect(m_play, SIGNAL(clicked()),
@@ -193,7 +191,7 @@ void MainWindow::createButtons(){
 	m_buttonlayout = new QHBoxLayout;
 	m_buttonlayout->addWidget(m_play);
 	m_buttonlayout->addWidget(m_stop);*/
-}
+//}
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::createLayouts:
 //
@@ -217,18 +215,15 @@ MainWindow::createLayouts()
 	QWidget *buttonwidget = new QWidget(m_labelSide[0]);
 	m_buttonlayout = new QHBoxLayout;
 	m_play = new QPushButton("Play");
-    m_pause = new QPushButton("Pause");
+	m_pause = new QPushButton("Pause");
 	m_stop = new QPushButton("Stop");
 	m_nextsong = new QPushButton("Next");
 	m_buttonlayout ->addWidget(m_play);
-    m_buttonlayout ->addWidget(m_pause);
+	m_buttonlayout ->addWidget(m_pause);
 	m_buttonlayout ->addWidget(m_stop);
 	m_buttonlayout ->addWidget(m_nextsong);
 	buttonwidget ->setLayout(m_buttonlayout);
-	//m_play = new QPushButton("Play", m_stop);
-	//QWidget *buttonwidget = new QWidget;
-	//buttonwidget->setLayout(m_buttonlayout);
-	//m_leftSplit ->addWidget(buttonwidget);
+	
 	m_leftSplit ->addWidget(m_labelSide[0]);
 	m_leftSplit ->addWidget(m_labelSide[1]);
 	m_rightSplit->addWidget(widget );
@@ -578,17 +573,17 @@ void MainWindow::s_nextsong(){
 void MainWindow::s_pausebutton(){
     m_mediaplayer->pause();
 }
-
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::s_play:
 //
 // Slot function to play an mp3 song.
 // This uses audiere. Replace with functions from Qt5 multimedia module
 //
+
 void
 MainWindow::s_play(QTableWidgetItem *item)
 {
-    if(m_mediaplayer->state() == 2){
+	if(m_mediaplayer->state() == 2){
         qDebug("Resuming from paused state \n");
         m_mediaplayer->play();
         return;

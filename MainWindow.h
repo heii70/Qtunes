@@ -47,6 +47,7 @@ public slots:
 	void s_playbutton();
     void s_pausebutton();
 	void s_nextsong();
+    void s_setVolume(int);
 
 private:
 	void createActions();
@@ -82,7 +83,8 @@ private:
 	QPushButton	*m_stop;
 	QPushButton *m_play;
     QPushButton *m_pause;
-	QPushButton *m_nextsong;
+    QPushButton *m_nextsong;
+    QSlider *m_volumeSlider;
 	QHBoxLayout *m_buttonlayout;
 	
 	QMediaPlayer *m_mediaplayer;

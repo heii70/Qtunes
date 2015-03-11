@@ -64,6 +64,8 @@ MainWindow::MainWindow	(QString program)
 		this, SLOT(s_play(m_table->currentItem())));*/
 	connect(m_play, SIGNAL(clicked()),
 		this, SLOT(s_playbutton()));	
+    connect(m_pause, SIGNAL(clicked()),
+        this, SLOT(s_pausebutton()));
 	connect(m_nextsong, SIGNAL(clicked()),
 		this, SLOT(s_nextsong()));
 	connect(m_mediaplayer, SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),
@@ -215,9 +217,11 @@ MainWindow::createLayouts()
 	QWidget *buttonwidget = new QWidget(m_labelSide[0]);
 	m_buttonlayout = new QHBoxLayout;
 	m_play = new QPushButton("Play");
+    m_pause = new QPushButton("Pause");
 	m_stop = new QPushButton("Stop");
 	m_nextsong = new QPushButton("Next");
 	m_buttonlayout ->addWidget(m_play);
+    m_buttonlayout ->addWidget(m_pause);
 	m_buttonlayout ->addWidget(m_stop);
 	m_buttonlayout ->addWidget(m_nextsong);
 	buttonwidget ->setLayout(m_buttonlayout);
@@ -571,6 +575,10 @@ void MainWindow::s_nextsong(){
 	s_play(m_table->currentItem());
 }
 
+void MainWindow::s_pausebutton(){
+    m_mediaplayer->pause();
+}
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::s_play:
 //
@@ -580,6 +588,11 @@ void MainWindow::s_nextsong(){
 void
 MainWindow::s_play(QTableWidgetItem *item)
 {
+    if(m_mediaplayer->state() == 2){
+        qDebug("Resuming from paused state \n");
+        m_mediaplayer->play();
+        return;
+    }
 	item = m_table->item(item->row(),0);
 	QTextStream out(stdout);
 	out << QString("s_play1\n");

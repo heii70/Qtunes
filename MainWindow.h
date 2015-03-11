@@ -52,7 +52,7 @@ private:
 	void createMenus  ();
 	void createWidgets();
 	
-	void createButtons();
+	//void createButtons();
 	
 	void createLayouts();
 	void initLists	  ();

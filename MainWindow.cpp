@@ -68,6 +68,7 @@ MainWindow::MainWindow	(QString program)
 		this, SLOT(s_nextsong()));
 	connect(m_mediaplayer, SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),
             this, SLOT(statusChanged(QMediaPlayer::MediaStatus)));
+    connect(m_volumeSlider, SIGNAL(valueChanged(int)), this, SLOT(s_setVolume(int)));
 }
 
 
@@ -218,12 +219,20 @@ MainWindow::createLayouts()
 	m_pause = new QPushButton("Pause");
 	m_stop = new QPushButton("Stop");
 	m_nextsong = new QPushButton("Next");
+    m_volumeSlider = new QSlider(Qt::Horizontal, this);
+    m_volumeSlider->setRange(0, 100);
+    m_volumeSlider->setSliderPosition(100);
 	m_buttonlayout ->addWidget(m_play);
 	m_buttonlayout ->addWidget(m_pause);
 	m_buttonlayout ->addWidget(m_stop);
 	m_buttonlayout ->addWidget(m_nextsong);
 	buttonwidget ->setLayout(m_buttonlayout);
 	
+	//m_play = new QPushButton("Play", m_stop);
+	//QWidget *buttonwidget = new QWidget;
+	//buttonwidget->setLayout(m_buttonlayout);
+	//m_leftSplit ->addWidget(buttonwidget);
+    m_leftSplit ->addWidget(m_volumeSlider);
 	m_leftSplit ->addWidget(m_labelSide[0]);
 	m_leftSplit ->addWidget(m_labelSide[1]);
 	m_rightSplit->addWidget(widget );
@@ -573,6 +582,11 @@ void MainWindow::s_nextsong(){
 void MainWindow::s_pausebutton(){
     m_mediaplayer->pause();
 }
+
+void MainWindow::s_setVolume(int Volume){
+    m_mediaplayer->setVolume(Volume);
+}
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::s_play:
 //

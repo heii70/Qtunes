@@ -41,7 +41,6 @@ MainWindow::MainWindow	(QString program)
 	createActions();	// create actions for each menu item
 	createMenus  ();	// create menus and associate actions
 	createWidgets();	// create window widgets
-	//createButtons(); 
 	createLayouts();	// create widget layouts
 	m_mediaplayer = new QMediaPlayer;
 	// populate the list widgets with music library data
@@ -182,17 +181,6 @@ MainWindow::createWidgets()
 		this,		  SLOT(s_play	  (QTableWidgetItem*)));
 }
 
-//void MainWindow::createButtons(){
-	/*m_stop = new QPushButton("Stop");
-	m_play = new QPushButton("Play");
-	/*connect(m_play, SIGNAL(clicked()),
-		this, SLOT(s_play(m_table->currentItem())));
-	connect(m_stop, SIGNAL(clicked()),
-		m_mediaplayer, SLOT(stop()));
-	m_buttonlayout = new QHBoxLayout;
-	m_buttonlayout->addWidget(m_play);
-	m_buttonlayout->addWidget(m_stop);*/
-//}
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::createLayouts:
 //
@@ -214,32 +202,30 @@ MainWindow::createLayouts()
 
 	// add widgets to the splitters
 	QWidget *buttonwidget = new QWidget(m_labelSide[0]);
-	m_buttonlayout = new QHBoxLayout;
+	m_buttonlayout = new QGridLayout;
 	m_play = new QPushButton("Play");
 	m_pause = new QPushButton("Pause");
 	m_stop = new QPushButton("Stop");
 	m_nextsong = new QPushButton("Next");
-    m_volumeSlider = new QSlider(Qt::Horizontal, this);
+    m_volumeSlider = new QSlider(Qt::Horizontal, buttonwidget);
     m_volumeSlider->setRange(0, 100);
     m_volumeSlider->setSliderPosition(100);
-	m_buttonlayout ->addWidget(m_play);
-	m_buttonlayout ->addWidget(m_pause);
-	m_buttonlayout ->addWidget(m_stop);
-	m_buttonlayout ->addWidget(m_nextsong);
+	//m_volumeSlider->setMaximumWidth(50);
+	m_buttonlayout ->addWidget(m_play,0,1);
+	m_buttonlayout ->addWidget(m_pause,1,1);
+	m_buttonlayout ->addWidget(m_stop,0,0);
+	m_buttonlayout ->addWidget(m_nextsong,0,2);
+	m_buttonlayout ->addWidget(m_volumeSlider,1,2);
 	buttonwidget ->setLayout(m_buttonlayout);
 	
-	//m_play = new QPushButton("Play", m_stop);
-	//QWidget *buttonwidget = new QWidget;
-	//buttonwidget->setLayout(m_buttonlayout);
-	//m_leftSplit ->addWidget(buttonwidget);
-    m_leftSplit ->addWidget(m_volumeSlider);
+    //m_leftSplit ->addWidget(m_volumeSlider);
 	m_leftSplit ->addWidget(m_labelSide[0]);
 	m_leftSplit ->addWidget(m_labelSide[1]);
 	m_rightSplit->addWidget(widget );
 	m_rightSplit->addWidget(m_table);
 
 	// set main splitter sizes
-	setSizes(m_mainSplit, (int)(width ()*.25), (int)(width ()*.75));
+	setSizes(m_mainSplit, (int)(width ()*.3), (int)(width ()*.7));
 	setSizes(m_leftSplit, (int)(height()*.5), (int)(height()*.5));
 	setSizes(m_rightSplit,(int)(height()*.4), (int)(height()*.6));
 }
@@ -605,8 +591,6 @@ MainWindow::s_play(QTableWidgetItem *item)
 	item = m_table->item(item->row(),0);
 	QTextStream out(stdout);
 	out << QString("s_play1\n");
-	//if (mediaplayer->error() != 0) return;
-	//QString temp_title = QString("%1").arg(m_listSongs[i][PATH]);
 	for(int i=0; i<m_listSongs.size(); i++) {
 		// skip over songs whose title does not match
 		if(m_listSongs[i][TITLE] != item->text()) continue;

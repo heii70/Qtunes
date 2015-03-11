@@ -85,7 +85,7 @@ private:
     QPushButton *m_pause;
     QPushButton *m_nextsong;
     QSlider *m_volumeSlider;
-	QHBoxLayout *m_buttonlayout;
+	QGridLayout *m_buttonlayout;
 	
 	QMediaPlayer *m_mediaplayer;
 

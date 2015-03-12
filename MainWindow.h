@@ -46,6 +46,7 @@ public slots:
 	void statusChanged(QMediaPlayer::MediaStatus status);
 	void s_playbutton();
     void s_pausebutton();
+	void s_prevsong();
 	void s_nextsong();
     void s_setVolume(int);
 
@@ -80,10 +81,11 @@ private:
 	QListWidget 	*m_panel[3];
 	QTableWidget	*m_table;
 	QProgressDialog	*m_progressBar;
-	QPushButton	*m_stop;
-	QPushButton *m_play;
-    QPushButton *m_pause;
-    QPushButton *m_nextsong;
+	QToolButton	*m_stop;
+	QToolButton *m_play;
+    QToolButton *m_pause;
+	QToolButton *m_prevsong;
+    QToolButton *m_nextsong;
     QSlider *m_volumeSlider;
 	QGridLayout *m_buttonlayout;
 	

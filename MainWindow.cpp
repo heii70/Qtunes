@@ -19,6 +19,7 @@
 #include <QtMultimedia>
 #include "qmediaplayer.h"
 #include <iostream>
+#include <QToolButton>
 using namespace std;
 
 enum {TITLE, TRACK, TIME, ARTIST, ALBUM, GENRE, PATH};
@@ -65,6 +66,8 @@ MainWindow::MainWindow	(QString program)
         this, SLOT(s_pausebutton()));
 	connect(m_nextsong, SIGNAL(clicked()),
 		this, SLOT(s_nextsong()));
+	connect(m_prevsong, SIGNAL(clicked()),
+		this, SLOT(s_prevsong()));
 	connect(m_mediaplayer, SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),
             this, SLOT(statusChanged(QMediaPlayer::MediaStatus)));
     connect(m_volumeSlider, SIGNAL(valueChanged(int)), this, SLOT(s_setVolume(int)));
@@ -203,19 +206,31 @@ MainWindow::createLayouts()
 	// add widgets to the splitters
 	QWidget *buttonwidget = new QWidget(m_labelSide[0]);
 	m_buttonlayout = new QGridLayout;
-	m_play = new QPushButton("Play");
-	m_pause = new QPushButton("Pause");
-	m_stop = new QPushButton("Stop");
-	m_nextsong = new QPushButton("Next");
+	//m_play = new QPushButton("Play");
+	m_play = new QToolButton(widget);
+	m_stop = new QToolButton(widget);
+	m_prevsong = new QToolButton(widget);
+	m_nextsong = new QToolButton(widget);
+	m_pause = new QToolButton(widget);
+    m_play->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
+	m_stop->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
+	m_prevsong->setIcon(style()->standardIcon(QStyle::SP_MediaSkipBackward));
+	m_nextsong->setIcon(style()->standardIcon(QStyle::SP_MediaSkipForward));
+	m_pause->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
+	//m_pause = new QPushButton("Pause");
+	//m_stop = new QPushButton("Stop");
+	//m_nextsong = new QPushButton("Next");
     m_volumeSlider = new QSlider(Qt::Horizontal, buttonwidget);
     m_volumeSlider->setRange(0, 100);
-    m_volumeSlider->setSliderPosition(100);
+    m_volumeSlider->setSliderPosition(80);
+	m_volumeSlider->setMaximumWidth(100);
 	//m_volumeSlider->setMaximumWidth(50);
-	m_buttonlayout ->addWidget(m_play,0,1);
-	m_buttonlayout ->addWidget(m_pause,1,1);
-	m_buttonlayout ->addWidget(m_stop,0,0);
-	m_buttonlayout ->addWidget(m_nextsong,0,2);
-	m_buttonlayout ->addWidget(m_volumeSlider,1,2);
+	m_buttonlayout ->addWidget(m_play,0,2);
+	m_buttonlayout ->addWidget(m_pause,0,3);
+	m_buttonlayout ->addWidget(m_stop,0,1);
+	m_buttonlayout ->addWidget(m_prevsong,0,0);
+	m_buttonlayout ->addWidget(m_nextsong,0,4);
+	m_buttonlayout ->addWidget(m_volumeSlider,0,5);
 	buttonwidget ->setLayout(m_buttonlayout);
 	
     //m_leftSplit ->addWidget(m_volumeSlider);
@@ -225,7 +240,7 @@ MainWindow::createLayouts()
 	m_rightSplit->addWidget(m_table);
 
 	// set main splitter sizes
-	setSizes(m_mainSplit, (int)(width ()*.3), (int)(width ()*.7));
+	setSizes(m_mainSplit, (int)(width ()*.32), (int)(width ()*.68));
 	setSizes(m_leftSplit, (int)(height()*.5), (int)(height()*.5));
 	setSizes(m_rightSplit,(int)(height()*.4), (int)(height()*.6));
 }
@@ -555,6 +570,15 @@ MainWindow::s_about()
 
 void MainWindow::s_playbutton(){
 	s_play(m_table->currentItem());
+}
+void MainWindow::s_prevsong()
+{
+    QTableWidgetItem *temp = m_table->currentItem();
+    if(temp->row() == 0)
+        temp = m_table->item(m_table->rowCount()-1,0);
+    else temp = m_table->item(temp->row()-1,0);
+    m_table->setCurrentItem(temp);
+    s_play(m_table->currentItem());
 }
 void MainWindow::s_nextsong(){
 	QTableWidgetItem *temp = m_table->currentItem();

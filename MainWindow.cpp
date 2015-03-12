@@ -478,7 +478,6 @@ MainWindow::s_load()
 
         traverseDirs(m_directory);
 	initLists();
-
 	m_progressBar->close(); 
 }
 
@@ -586,6 +585,8 @@ void MainWindow::s_playbutton(){
 }
 void MainWindow::s_prevsong()
 {
+    if(m_table->currentItem() == NULL)
+        return;
     QTableWidgetItem *temp = m_table->currentItem();
     if(temp->row() == 0)
         temp = m_table->item(m_table->rowCount()-1,0);
@@ -594,6 +595,8 @@ void MainWindow::s_prevsong()
     s_play(m_table->currentItem());
 }
 void MainWindow::s_nextsong(){
+    if(m_table->currentItem() == NULL)
+        return;
 	QTableWidgetItem *temp = m_table->currentItem();
 	if(temp->row() == m_table->rowCount()-1)
 		temp = m_table->item(0,0);
@@ -620,7 +623,9 @@ void MainWindow::s_setVolume(int Volume){
 void
 MainWindow::s_play(QTableWidgetItem *item)
 {
-	if(m_mediaplayer->state() == 2){
+    if(item == NULL)
+        return;
+    if(m_mediaplayer->state() == 2){
         qDebug("Resuming from paused state \n");
         m_mediaplayer->play();
         return;
@@ -633,7 +638,7 @@ MainWindow::s_play(QTableWidgetItem *item)
 		if(m_listSongs[i][TITLE] != item->text()) continue;
 		QString temp_title = QString("%1").arg(m_listSongs[i][PATH]);
 		m_mediaplayer->setMedia(QUrl::fromLocalFile(temp_title));
-		m_mediaplayer->setVolume(100);
+        //m_mediaplayer->setVolume(100);
 		m_mediaplayer->play();
 		qDebug("Trying to play \n");
 		if(m_stop->isDown()){

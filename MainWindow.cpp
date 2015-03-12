@@ -20,6 +20,7 @@
 #include "qmediaplayer.h"
 #include <iostream>
 #include <QToolButton>
+
 using namespace std;
 
 enum {TITLE, TRACK, TIME, ARTIST, ALBUM, GENRE, PATH};
@@ -55,9 +56,9 @@ MainWindow::MainWindow	(QString program)
 	setWindowTitle(title);
 
 	// set central widget and default size
-	setCentralWidget(m_mainSplit);
+	setCentralWidget(m_mainWidget);
 	setMinimumSize(400, 300);
-	resize(900, 600);
+	resize(850, 525);
 	connect(m_stop, SIGNAL(clicked()),
 		m_mediaplayer, SLOT(stop()));
 	connect(m_play, SIGNAL(clicked()),
@@ -133,16 +134,19 @@ MainWindow::createMenus()
 void
 MainWindow::createWidgets()
 {
+	m_mainWidget = new QWidget;
+	m_mainBox = new QVBoxLayout;
+	m_songSplitter = new QWidget;
 	// initialize splitters
-	m_mainSplit  = new QSplitter(this);
-	m_leftSplit  = new QSplitter(Qt::Vertical, m_mainSplit);
-	m_rightSplit = new QSplitter(Qt::Vertical, m_mainSplit);
+	//m_mainSplit  = new QSplitter(this);
+	//m_leftSplit  = new QSplitter(Qt::Vertical, m_mainSplit);
+	m_rightSplit = new QSplitter(Qt::Vertical, m_songSplitter);
 
 	// init labels on left side of main splitter
-	for(int i=0; i<2; i++) {
+	/*for(int i=0; i<2; i++) {
 		m_labelSide[i] = new QLabel(QString("Label%1").arg(i));
 		m_labelSide[i]->setAlignment(Qt::AlignCenter);
-	}
+	}*/
 
 	// initialize label on right side of main splitter
 	for(int i=0; i<3; i++) {
@@ -164,7 +168,7 @@ MainWindow::createWidgets()
 	// initialize table widget: complete song data
 	m_table = new QTableWidget(0, COLS);
 	QHeaderView *header = new QHeaderView(Qt::Horizontal,m_table);
-	//header->setResizeMode(QHeaderView::Stretch);
+	header->setSectionResizeMode(QHeaderView::Stretch);
 	m_table->setHorizontalHeader(header);
 	m_table->setHorizontalHeaderLabels(QStringList() <<
 		"Name" << "Track" << "Time" << "Artist" << "Album" << "Genre");
@@ -204,14 +208,14 @@ MainWindow::createLayouts()
 	grid->addWidget(m_panel[2], 1, 2);
 
 	// add widgets to the splitters
-	QWidget *buttonwidget = new QWidget(m_labelSide[0]);
+	QWidget *buttonwidget = new QWidget;
 	m_buttonlayout = new QGridLayout;
 	//m_play = new QPushButton("Play");
-	m_play = new QToolButton(widget);
-	m_stop = new QToolButton(widget);
-	m_prevsong = new QToolButton(widget);
-	m_nextsong = new QToolButton(widget);
-	m_pause = new QToolButton(widget);
+	m_play = new QToolButton;
+	m_stop = new QToolButton;
+	m_prevsong = new QToolButton;
+	m_nextsong = new QToolButton;
+	m_pause = new QToolButton;
     m_play->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
 	m_stop->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
 	m_prevsong->setIcon(style()->standardIcon(QStyle::SP_MediaSkipBackward));
@@ -232,17 +236,26 @@ MainWindow::createLayouts()
 	m_buttonlayout ->addWidget(m_nextsong,0,4);
 	m_buttonlayout ->addWidget(m_volumeSlider,0,5);
 	buttonwidget ->setLayout(m_buttonlayout);
+	buttonwidget ->setMaximumHeight(50);
+	buttonwidget ->setMaximumWidth(500);
 	
     //m_leftSplit ->addWidget(m_volumeSlider);
-	m_leftSplit ->addWidget(m_labelSide[0]);
-	m_leftSplit ->addWidget(m_labelSide[1]);
-	m_rightSplit->addWidget(widget );
+	//m_leftSplit ->addWidget(m_labelSide[0]);
+	//m_leftSplit ->addWidget(m_labelSide[1]);
+	m_rightSplit->addWidget(widget);
+	
 	m_rightSplit->addWidget(m_table);
-
+	m_mainBox-> addWidget(buttonwidget);
+	m_mainBox-> setAlignment(buttonwidget, Qt::AlignHCenter);
+	m_songSplitter->adjustSize();
+	m_mainBox-> addWidget(m_songSplitter);
+	
+	//m_mainBox-> setAlignment(m_songSplitter, Qt::AlignHCenter);
+	m_mainWidget ->setLayout(m_mainBox);
 	// set main splitter sizes
-	setSizes(m_mainSplit, (int)(width ()*.32), (int)(width ()*.68));
-	setSizes(m_leftSplit, (int)(height()*.5), (int)(height()*.5));
-	setSizes(m_rightSplit,(int)(height()*.4), (int)(height()*.6));
+	//setSizes(m_mainSplit, (int)(width ()*.32), (int)(width ()*.68));
+	//setSizes(m_leftSplit, (int)(height()*.5), (int)(height()*.5));
+	//setSizes(m_rightSplit,(int)(height()*.50), (int)(height()*.50));
 }
 
 

@@ -73,10 +73,13 @@ private:
 	QMenu		*m_helpMenu;
 
 	// widgets
-	QSplitter	*m_mainSplit;
-	QSplitter	*m_leftSplit;
+	QWidget *m_mainWidget;
+	QWidget *m_songSplitter;
+	QVBoxLayout *m_mainBox;
+	//QSplitter	*m_mainSplit;
+	//QSplitter	*m_leftSplit;
 	QSplitter	*m_rightSplit;
-	QLabel		*m_labelSide[2];
+	//QLabel		*m_labelSide[2];
 	QLabel		*m_label[3];
 	QListWidget 	*m_panel[3];
 	QTableWidget	*m_table;

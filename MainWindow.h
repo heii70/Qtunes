@@ -11,6 +11,8 @@
 #define MAINWINDOW_H
 #include "qmediaplayer.h"
 #include <QtWidgets>
+#include "squareswidget.h"
+class SquaresWidget;
 class QMediaPlayer;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -92,6 +94,7 @@ private:
     QSlider *m_volumeSlider;
 	QGridLayout *m_buttonlayout;
 	
+	SquaresWidget *m_squares;
 	QMediaPlayer *m_mediaplayer;
 
 	// string lists

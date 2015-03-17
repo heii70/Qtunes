@@ -20,6 +20,7 @@
 #include "qmediaplayer.h"
 #include <iostream>
 #include <QToolButton>
+#include "squareswidget.h"
 
 using namespace std;
 
@@ -58,7 +59,7 @@ MainWindow::MainWindow	(QString program)
 	// set central widget and default size
 	setCentralWidget(m_mainWidget);
 	setMinimumSize(400, 300);
-	resize(850, 525);
+	resize(850, 700);
 	connect(m_stop, SIGNAL(clicked()),
 		m_mediaplayer, SLOT(stop()));
 	connect(m_play, SIGNAL(clicked()),
@@ -137,6 +138,8 @@ MainWindow::createWidgets()
 	m_mainWidget = new QWidget;
 	m_mainBox = new QVBoxLayout;
 	m_songSplitter = new QWidget;
+	
+	m_squares = new SquaresWidget;
 	// initialize splitters
 	//m_mainSplit  = new QSplitter(this);
 	//m_leftSplit  = new QSplitter(Qt::Vertical, m_mainSplit);
@@ -245,6 +248,8 @@ MainWindow::createLayouts()
 	m_rightSplit->addWidget(widget);
 	
 	m_rightSplit->addWidget(m_table);
+	m_mainBox-> addWidget(m_squares);
+	m_mainBox-> setAlignment(m_squares, Qt::AlignHCenter);
 	m_mainBox-> addWidget(buttonwidget);
 	m_mainBox-> setAlignment(buttonwidget, Qt::AlignHCenter);
 	m_songSplitter->adjustSize();

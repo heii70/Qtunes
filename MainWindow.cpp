@@ -59,7 +59,7 @@ MainWindow::MainWindow	(QString program)
 	// set central widget and default size
 	setCentralWidget(m_mainWidget);
 	setMinimumSize(400, 300);
-	resize(850, 700);
+	resize(830, 850);
 	connect(m_stop, SIGNAL(clicked()),
 		m_mediaplayer, SLOT(stop()));
 	connect(m_play, SIGNAL(clicked()),
@@ -144,6 +144,7 @@ MainWindow::createWidgets()
 	//m_mainSplit  = new QSplitter(this);
 	//m_leftSplit  = new QSplitter(Qt::Vertical, m_mainSplit);
 	m_rightSplit = new QSplitter(Qt::Vertical, m_songSplitter);
+	m_songSplitter->setMinimumSize(830,300);
 
 	// init labels on left side of main splitter
 	/*for(int i=0; i<2; i++) {
@@ -252,15 +253,19 @@ MainWindow::createLayouts()
 	m_mainBox-> setAlignment(m_squares, Qt::AlignHCenter);
 	m_mainBox-> addWidget(buttonwidget);
 	m_mainBox-> setAlignment(buttonwidget, Qt::AlignHCenter);
+	
+	m_songSplitter->resize(830,300);
+	//m_songSplitter->setSizePolicy(QSizePolicy::Expanding);
 	m_songSplitter->adjustSize();
 	m_mainBox-> addWidget(m_songSplitter);
+	m_mainBox-> setAlignment(m_songSplitter, Qt::AlignHCenter);
 	
 	//m_mainBox-> setAlignment(m_songSplitter, Qt::AlignHCenter);
 	m_mainWidget ->setLayout(m_mainBox);
 	// set main splitter sizes
 	//setSizes(m_mainSplit, (int)(width ()*.32), (int)(width ()*.68));
 	//setSizes(m_leftSplit, (int)(height()*.5), (int)(height()*.5));
-	//setSizes(m_rightSplit,(int)(height()*.50), (int)(height()*.50));
+	setSizes(m_rightSplit,(int)(height()*.15), (int)(height()*.30));
 }
 
 

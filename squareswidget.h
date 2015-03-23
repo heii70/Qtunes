@@ -15,6 +15,6 @@ protected:
     void paintGL();
 	
 private:
-	QTimer *m_timer;
+	QTimer *m_timer; //automatically resets itself
 };
 #endif

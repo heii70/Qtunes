@@ -382,7 +382,7 @@ MainWindow::traverseDirs(QString path)
 
 		// init list with default values: ""
 		for(int j=0; j<=COLS; j++)
-			list.insert(j, "");
+			list.insert(j, "N/A");
 
 		// store file pathname into 0th position in list
 		QFileInfo fileInfo = listFiles.at(i);

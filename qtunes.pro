@@ -6,9 +6,9 @@ QT -= core gui
 QT += multimedia
 QT += widgets
 
-INCLUDEPATH += -I /usr/local/include/taglib
+INCLUDEPATH += -I /usr/local/include/taglib -I /opt/X11
 LIBS += -L /usr/local/lib 
-LIBS += -ltag
+LIBS += -ltag 
 CONFIG += console
 
 TEMPLATE = app

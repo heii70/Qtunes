@@ -73,6 +73,8 @@ MainWindow::MainWindow	(QString program)
 	connect(m_mediaplayer, SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),
             this, SLOT(statusChanged(QMediaPlayer::MediaStatus)));
     connect(m_volumeSlider, SIGNAL(valueChanged(int)), this, SLOT(s_setVolume(int)));
+	connect(m_albumleft, SIGNAL(clicked()), m_squares, SLOT(s_shiftleft()));
+	connect(m_albumright, SIGNAL(clicked()), m_squares, SLOT(s_shiftright()));	
 }
 
 
@@ -213,7 +215,7 @@ MainWindow::createLayouts()
 
 	// add widgets to the splitters
 	QWidget *buttonwidget = new QWidget;
-	m_buttonlayout = new QGridLayout;
+	m_buttonlayout = new QHBoxLayout;
 	//m_play = new QPushButton("Play");
 	m_play = new QToolButton;
 	m_stop = new QToolButton;
@@ -225,6 +227,12 @@ MainWindow::createLayouts()
 	m_prevsong->setIcon(style()->standardIcon(QStyle::SP_MediaSkipBackward));
 	m_nextsong->setIcon(style()->standardIcon(QStyle::SP_MediaSkipForward));
 	m_pause->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
+	
+	m_albumleft = new QToolButton;
+	m_albumright = new QToolButton;
+	m_albumleft->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
+	m_albumright->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
+	
 	//m_pause = new QPushButton("Pause");
 	//m_stop = new QPushButton("Stop");
 	//m_nextsong = new QPushButton("Next");
@@ -233,12 +241,14 @@ MainWindow::createLayouts()
     m_volumeSlider->setSliderPosition(80);
 	m_volumeSlider->setMaximumWidth(100);
 	//m_volumeSlider->setMaximumWidth(50);
-	m_buttonlayout ->addWidget(m_play,0,2);
-	m_buttonlayout ->addWidget(m_pause,0,3);
-	m_buttonlayout ->addWidget(m_stop,0,1);
-	m_buttonlayout ->addWidget(m_prevsong,0,0);
-	m_buttonlayout ->addWidget(m_nextsong,0,4);
-	m_buttonlayout ->addWidget(m_volumeSlider,0,5);
+	m_buttonlayout ->addWidget(m_albumleft);
+	m_buttonlayout ->addWidget(m_prevsong);
+	m_buttonlayout ->addWidget(m_stop);
+	m_buttonlayout ->addWidget(m_play);
+	m_buttonlayout ->addWidget(m_pause);
+	m_buttonlayout ->addWidget(m_nextsong);
+	m_buttonlayout ->addWidget(m_volumeSlider);
+	m_buttonlayout ->addWidget(m_albumright);
 	buttonwidget ->setLayout(m_buttonlayout);
 	buttonwidget ->setMaximumHeight(50);
 	buttonwidget ->setMaximumWidth(500);

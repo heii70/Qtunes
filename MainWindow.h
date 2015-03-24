@@ -91,8 +91,10 @@ private:
     QToolButton *m_pause;
 	QToolButton *m_prevsong;
     QToolButton *m_nextsong;
+	QToolButton *m_albumleft;
+	QToolButton *m_albumright;
     QSlider *m_volumeSlider;
-	QGridLayout *m_buttonlayout;
+	QHBoxLayout *m_buttonlayout;
 	
 	SquaresWidget *m_squares;
 	QMediaPlayer *m_mediaplayer;

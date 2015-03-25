@@ -74,7 +74,8 @@ MainWindow::MainWindow	(QString program)
             this, SLOT(statusChanged(QMediaPlayer::MediaStatus)));
     connect(m_volumeSlider, SIGNAL(valueChanged(int)), this, SLOT(s_setVolume(int)));
 	connect(m_albumleft, SIGNAL(clicked()), m_squares, SLOT(s_shiftleft()));
-	connect(m_albumright, SIGNAL(clicked()), m_squares, SLOT(s_shiftright()));	
+	connect(m_albumright, SIGNAL(clicked()), m_squares, SLOT(s_shiftright()));
+	connect(m_loadart, SIGNAL(clicked()), m_squares, SLOT(s_loadart()));
 }
 
 
@@ -146,7 +147,7 @@ MainWindow::createWidgets()
 	//m_mainSplit  = new QSplitter(this);
 	//m_leftSplit  = new QSplitter(Qt::Vertical, m_mainSplit);
 	m_rightSplit = new QSplitter(Qt::Vertical, m_songSplitter);
-	m_songSplitter->setMinimumSize(830,300);
+	m_songSplitter->setMinimumSize(830,10);
 
 	// init labels on left side of main splitter
 	/*for(int i=0; i<2; i++) {
@@ -233,6 +234,9 @@ MainWindow::createLayouts()
 	m_albumleft->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
 	m_albumright->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
 	
+	m_loadart = new QToolButton;
+	m_loadart->setIcon(style()->standardIcon(QStyle::SP_DirIcon));
+	
 	//m_pause = new QPushButton("Pause");
 	//m_stop = new QPushButton("Stop");
 	//m_nextsong = new QPushButton("Next");
@@ -242,6 +246,7 @@ MainWindow::createLayouts()
 	m_volumeSlider->setMaximumWidth(100);
 	//m_volumeSlider->setMaximumWidth(50);
 	m_buttonlayout ->addWidget(m_albumleft);
+	m_buttonlayout ->addWidget(m_loadart);
 	m_buttonlayout ->addWidget(m_prevsong);
 	m_buttonlayout ->addWidget(m_stop);
 	m_buttonlayout ->addWidget(m_play);
@@ -253,29 +258,21 @@ MainWindow::createLayouts()
 	buttonwidget ->setMaximumHeight(50);
 	buttonwidget ->setMaximumWidth(500);
 	
-    //m_leftSplit ->addWidget(m_volumeSlider);
-	//m_leftSplit ->addWidget(m_labelSide[0]);
-	//m_leftSplit ->addWidget(m_labelSide[1]);
+	widget->setMaximumHeight(180);
 	m_rightSplit->addWidget(widget);
-	
+	m_table->setMaximumHeight(210);
 	m_rightSplit->addWidget(m_table);
 	m_mainBox-> addWidget(m_squares);
 	m_mainBox-> setAlignment(m_squares, Qt::AlignHCenter);
 	m_mainBox-> addWidget(buttonwidget);
 	m_mainBox-> setAlignment(buttonwidget, Qt::AlignHCenter);
 	
-	m_songSplitter->resize(830,300);
-	//m_songSplitter->setSizePolicy(QSizePolicy::Expanding);
 	m_songSplitter->adjustSize();
 	m_mainBox-> addWidget(m_songSplitter);
 	m_mainBox-> setAlignment(m_songSplitter, Qt::AlignHCenter);
-	
-	//m_mainBox-> setAlignment(m_songSplitter, Qt::AlignHCenter);
 	m_mainWidget ->setLayout(m_mainBox);
-	// set main splitter sizes
-	//setSizes(m_mainSplit, (int)(width ()*.32), (int)(width ()*.68));
-	//setSizes(m_leftSplit, (int)(height()*.5), (int)(height()*.5));
-	setSizes(m_rightSplit,(int)(height()*.15), (int)(height()*.30));
+	
+	//setSizes(m_rightSplit,(int)(300*.30), (int)(300*.70));
 }
 
 

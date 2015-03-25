@@ -93,6 +93,8 @@ private:
     QToolButton *m_nextsong;
 	QToolButton *m_albumleft;
 	QToolButton *m_albumright;
+	QToolButton *m_loadart;
+	
     QSlider *m_volumeSlider;
 	QHBoxLayout *m_buttonlayout;
 	

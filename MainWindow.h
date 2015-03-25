@@ -51,6 +51,9 @@ public slots:
 	void s_prevsong();
 	void s_nextsong();
     void s_setVolume(int);
+    void s_setPosition(qint64);
+    void s_seek(int);
+    void s_updateLabel(qint64);
 
 private:
 	void createActions();
@@ -94,7 +97,10 @@ private:
 	QToolButton *m_albumleft;
 	QToolButton *m_albumright;
     QSlider *m_volumeSlider;
+    QSlider *m_timeSlider;
+    QLabel *m_timeLabel;
 	QHBoxLayout *m_buttonlayout;
+    QHBoxLayout *m_sliderlayout;
 	
 	SquaresWidget *m_squares;
 	QMediaPlayer *m_mediaplayer;

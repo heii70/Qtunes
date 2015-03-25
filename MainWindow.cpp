@@ -73,6 +73,9 @@ MainWindow::MainWindow	(QString program)
 	connect(m_mediaplayer, SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),
             this, SLOT(statusChanged(QMediaPlayer::MediaStatus)));
     connect(m_volumeSlider, SIGNAL(valueChanged(int)), this, SLOT(s_setVolume(int)));
+    connect(m_mediaplayer, SIGNAL(positionChanged(qint64)), this, SLOT(s_setPosition(qint64)));
+    connect(m_mediaplayer, SIGNAL(positionChanged(qint64)), this, SLOT(s_updateLabel(qint64)));
+    connect(m_timeSlider, SIGNAL(sliderMoved(int)), this, SLOT(s_seek(int)));
 	connect(m_albumleft, SIGNAL(clicked()), m_squares, SLOT(s_shiftleft()));
 	connect(m_albumright, SIGNAL(clicked()), m_squares, SLOT(s_shiftright()));	
 }
@@ -215,7 +218,7 @@ MainWindow::createLayouts()
 
 	// add widgets to the splitters
 	QWidget *buttonwidget = new QWidget;
-	m_buttonlayout = new QHBoxLayout;
+    m_buttonlayout = new QHBoxLayout;
 	//m_play = new QPushButton("Play");
 	m_play = new QToolButton;
 	m_stop = new QToolButton;
@@ -239,19 +242,26 @@ MainWindow::createLayouts()
     m_volumeSlider = new QSlider(Qt::Horizontal, buttonwidget);
     m_volumeSlider->setRange(0, 100);
     m_volumeSlider->setSliderPosition(80);
-	m_volumeSlider->setMaximumWidth(100);
+    //m_volumeSlider->setMaximumWidth(100);
 	//m_volumeSlider->setMaximumWidth(50);
+    m_timeLabel = new QLabel;
+    m_timeLabel ->setText("00:00 / 00:00");
+    m_timeSlider = new QSlider(Qt::Horizontal, buttonwidget);
+    m_timeSlider ->setRange(0, 0);
+    //m_timeSlider->setMaximumWidth(500);
 	m_buttonlayout ->addWidget(m_albumleft);
+    m_buttonlayout ->addWidget(m_volumeSlider);
 	m_buttonlayout ->addWidget(m_prevsong);
 	m_buttonlayout ->addWidget(m_stop);
 	m_buttonlayout ->addWidget(m_play);
 	m_buttonlayout ->addWidget(m_pause);
 	m_buttonlayout ->addWidget(m_nextsong);
-	m_buttonlayout ->addWidget(m_volumeSlider);
+    m_buttonlayout ->addWidget(m_timeSlider);
+    m_buttonlayout ->addWidget(m_timeLabel);
 	m_buttonlayout ->addWidget(m_albumright);
 	buttonwidget ->setLayout(m_buttonlayout);
 	buttonwidget ->setMaximumHeight(50);
-	buttonwidget ->setMaximumWidth(500);
+    buttonwidget ->setMaximumWidth(500);
 	
     //m_leftSplit ->addWidget(m_volumeSlider);
 	//m_leftSplit ->addWidget(m_labelSide[0]);
@@ -262,8 +272,7 @@ MainWindow::createLayouts()
 	m_mainBox-> addWidget(m_squares);
 	m_mainBox-> setAlignment(m_squares, Qt::AlignHCenter);
 	m_mainBox-> addWidget(buttonwidget);
-	m_mainBox-> setAlignment(buttonwidget, Qt::AlignHCenter);
-	
+    m_mainBox-> setAlignment(buttonwidget, Qt::AlignHCenter);
 	m_songSplitter->resize(830,300);
 	//m_songSplitter->setSizePolicy(QSizePolicy::Expanding);
 	m_songSplitter->adjustSize();
@@ -633,6 +642,35 @@ void MainWindow::s_setVolume(int Volume){
     m_mediaplayer->setVolume(Volume);
 }
 
+void MainWindow::s_setPosition(qint64 Position){
+    m_timeSlider->setValue(Position);
+}
+
+void MainWindow::s_seek(int newPosition){
+    qint64 position = (qint64)newPosition;
+    m_mediaplayer->setPosition(position);
+}
+
+void MainWindow::s_updateLabel(qint64 Time){
+    int endSecond = ((int)m_mediaplayer->duration() / 1000)%60;
+    int endMinute = ((int)m_mediaplayer->duration() / 1000)/60;
+    QString endTime;
+    if(endSecond < 10)
+        endTime = QString("%1:0%2").arg(endMinute).arg(endSecond);
+    else endTime = QString("%1:%2").arg(endMinute).arg(endSecond);
+
+    int currentSecond = ((int)m_mediaplayer->position() / 1000)%60;
+    int currentMinute = ((int)m_mediaplayer->position() / 1000)/60;
+    QString currentTime;
+    if(currentSecond < 10)
+        currentTime = QString("%1:0%2").arg(currentMinute).arg(currentSecond);
+    else currentTime = QString("%1:%2").arg(currentMinute).arg(currentSecond);
+    QString timeLabel = " / ";
+    timeLabel.prepend(currentTime);
+    timeLabel.append(endTime);
+    m_timeLabel->setText(timeLabel);
+}
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::s_play:
 //
@@ -658,7 +696,6 @@ MainWindow::s_play(QTableWidgetItem *item)
 		if(m_listSongs[i][TITLE] != item->text()) continue;
 		QString temp_title = QString("%1").arg(m_listSongs[i][PATH]);
 		m_mediaplayer->setMedia(QUrl::fromLocalFile(temp_title));
-        //m_mediaplayer->setVolume(100);
 		m_mediaplayer->play();
 		qDebug("Trying to play \n");
 		if(m_stop->isDown()){
@@ -677,4 +714,7 @@ void MainWindow::statusChanged(QMediaPlayer::MediaStatus status)
 		mediaplayer->play();
 		cout << "status changed \n" ;*/
 	}
+    if(status == QMediaPlayer::BufferedMedia){
+        m_timeSlider->setRange(0,m_mediaplayer->duration());
+    }
 }

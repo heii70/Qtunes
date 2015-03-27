@@ -11,6 +11,8 @@
 #define MAINWINDOW_H
 #include "qmediaplayer.h"
 #include <QtWidgets>
+#include "squareswidget.h"
+class SquaresWidget;
 class QMediaPlayer;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -43,17 +45,26 @@ public slots:
 	void s_panel3(QListWidgetItem*);
 	void s_play  (QTableWidgetItem*);
 	void s_about ();
-	void statusChanged(QMediaPlayer::MediaStatus status);
+    void timeStatusChanged(QMediaPlayer::MediaStatus status);
+    void repeatStatusChanged(QMediaPlayer::MediaStatus status);
+    void shuffleStatusChanged(QMediaPlayer::MediaStatus status);
+    void repeat_off();
+    void shuffle_off();
 	void s_playbutton();
     void s_pausebutton();
-	void s_nextsong();
+	void s_prevsong();
+    void s_nextsong();
+    void s_setVolume(int);
+    void s_setPosition(qint64);
+    void s_seek(int);
+    void s_updateLabel(qint64);
 
 private:
 	void createActions();
 	void createMenus  ();
 	void createWidgets();
 	
-	//void createButtons();
+	void createButtons();
 	
 	void createLayouts();
 	void initLists	  ();
@@ -71,20 +82,33 @@ private:
 	QMenu		*m_helpMenu;
 
 	// widgets
-	QSplitter	*m_mainSplit;
-	QSplitter	*m_leftSplit;
+	QWidget *m_mainWidget;
+	QWidget *m_songSplitter;
+	QVBoxLayout *m_mainBox;
+	//QSplitter	*m_mainSplit;
+	//QSplitter	*m_leftSplit;
 	QSplitter	*m_rightSplit;
-	QLabel		*m_labelSide[2];
+	//QLabel		*m_labelSide[2];
 	QLabel		*m_label[3];
 	QListWidget 	*m_panel[3];
 	QTableWidget	*m_table;
 	QProgressDialog	*m_progressBar;
-	QPushButton	*m_stop;
-	QPushButton *m_play;
-    QPushButton *m_pause;
-	QPushButton *m_nextsong;
+	QToolButton	*m_stop;
+	QToolButton *m_play;
+    QToolButton *m_pause;
+	QToolButton *m_prevsong;
+    QToolButton *m_nextsong;
+	QToolButton *m_albumleft;
+	QToolButton *m_albumright;
+    QToolButton *m_repeat;
+    QToolButton *m_shuffle;
+    QSlider *m_volumeSlider;
+    QSlider *m_timeSlider;
+    QLabel *m_timeLabel;
 	QHBoxLayout *m_buttonlayout;
+        QHBoxLayout *m_sliderlayout;
 	
+	SquaresWidget *m_squares;
 	QMediaPlayer *m_mediaplayer;
 
 	// string lists

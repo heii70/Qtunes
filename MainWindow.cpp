@@ -9,6 +9,7 @@
 // 				added tag support with TagLib
 //				adding mediplayer functionality using a QMediaPlayer object
 // ======================================================================
+#define TAGLIB_STATIC
 #include <QTextStream>
 #include <QtWidgets>
 #include "MainWindow.h"
@@ -19,6 +20,11 @@
 #include <QtMultimedia>
 #include "qmediaplayer.h"
 #include <iostream>
+#include <QToolButton>
+#include <QPushButton>
+#include "squareswidget.h"
+#include <QIcon>
+#include <Qsize>
 using namespace std;
 
 enum {TITLE, TRACK, TIME, ARTIST, ALBUM, GENRE, PATH};
@@ -41,7 +47,6 @@ MainWindow::MainWindow	(QString program)
 	createActions();	// create actions for each menu item
 	createMenus  ();	// create menus and associate actions
 	createWidgets();	// create window widgets
-	//createButtons(); 
 	createLayouts();	// create widget layouts
 	m_mediaplayer = new QMediaPlayer;
 	// populate the list widgets with music library data
@@ -55,9 +60,9 @@ MainWindow::MainWindow	(QString program)
 	setWindowTitle(title);
 
 	// set central widget and default size
-	setCentralWidget(m_mainSplit);
+	setCentralWidget(m_mainWidget);
 	setMinimumSize(400, 300);
-	resize(900, 600);
+	resize(830, 850);
 	connect(m_stop, SIGNAL(clicked()),
 		m_mediaplayer, SLOT(stop()));
 	connect(m_play, SIGNAL(clicked()),
@@ -66,11 +71,23 @@ MainWindow::MainWindow	(QString program)
         this, SLOT(s_pausebutton()));
 	connect(m_nextsong, SIGNAL(clicked()),
 		this, SLOT(s_nextsong()));
-	connect(m_mediaplayer, SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),
-            this, SLOT(statusChanged(QMediaPlayer::MediaStatus)));
+	connect(m_prevsong, SIGNAL(clicked()),
+		this, SLOT(s_prevsong()));
+    connect(m_mediaplayer, SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),
+            this, SLOT(timeStatusChanged(QMediaPlayer::MediaStatus)));
+    connect(m_mediaplayer, SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),
+            this, SLOT(repeatStatusChanged(QMediaPlayer::MediaStatus)));
+    connect(m_mediaplayer, SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),
+            this, SLOT(shuffleStatusChanged(QMediaPlayer::MediaStatus)));
+    connect(m_repeat, SIGNAL(toggled(bool)), this, SLOT(shuffle_off()));
+    connect(m_shuffle, SIGNAL(toggled(bool)), this, SLOT(repeat_off()));
+    connect(m_volumeSlider, SIGNAL(valueChanged(int)), this, SLOT(s_setVolume(int)));
+    connect(m_mediaplayer, SIGNAL(positionChanged(qint64)), this, SLOT(s_setPosition(qint64)));
+    connect(m_mediaplayer, SIGNAL(positionChanged(qint64)), this, SLOT(s_updateLabel(qint64)));
+    connect(m_timeSlider, SIGNAL(sliderMoved(int)), this, SLOT(s_seek(int)));
+	connect(m_albumleft, SIGNAL(clicked()), m_squares, SLOT(s_shiftleft()));
+    connect(m_albumright, SIGNAL(clicked()), m_squares, SLOT(s_shiftright()));
 }
-
-
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::~MainWindow:
@@ -130,16 +147,22 @@ MainWindow::createMenus()
 void
 MainWindow::createWidgets()
 {
+	m_mainWidget = new QWidget;
+	m_mainBox = new QVBoxLayout;
+	m_songSplitter = new QWidget;
+	
+	m_squares = new SquaresWidget;
 	// initialize splitters
-	m_mainSplit  = new QSplitter(this);
-	m_leftSplit  = new QSplitter(Qt::Vertical, m_mainSplit);
-	m_rightSplit = new QSplitter(Qt::Vertical, m_mainSplit);
+	//m_mainSplit  = new QSplitter(this);
+	//m_leftSplit  = new QSplitter(Qt::Vertical, m_mainSplit);
+	m_rightSplit = new QSplitter(Qt::Vertical, m_songSplitter);
+	m_songSplitter->setMinimumSize(830,300);
 
 	// init labels on left side of main splitter
-	for(int i=0; i<2; i++) {
+	/*for(int i=0; i<2; i++) {
 		m_labelSide[i] = new QLabel(QString("Label%1").arg(i));
 		m_labelSide[i]->setAlignment(Qt::AlignCenter);
-	}
+	}*/
 
 	// initialize label on right side of main splitter
 	for(int i=0; i<3; i++) {
@@ -161,7 +184,7 @@ MainWindow::createWidgets()
 	// initialize table widget: complete song data
 	m_table = new QTableWidget(0, COLS);
 	QHeaderView *header = new QHeaderView(Qt::Horizontal,m_table);
-	//header->setResizeMode(QHeaderView::Stretch);
+	header->setSectionResizeMode(QHeaderView::Stretch);
 	m_table->setHorizontalHeader(header);
 	m_table->setHorizontalHeaderLabels(QStringList() <<
 		"Name" << "Track" << "Time" << "Artist" << "Album" << "Genre");
@@ -181,17 +204,6 @@ MainWindow::createWidgets()
 		this,		  SLOT(s_play	  (QTableWidgetItem*)));
 }
 
-//void MainWindow::createButtons(){
-	/*m_stop = new QPushButton("Stop");
-	m_play = new QPushButton("Play");
-	/*connect(m_play, SIGNAL(clicked()),
-		this, SLOT(s_play(m_table->currentItem())));
-	connect(m_stop, SIGNAL(clicked()),
-		m_mediaplayer, SLOT(stop()));
-	m_buttonlayout = new QHBoxLayout;
-	m_buttonlayout->addWidget(m_play);
-	m_buttonlayout->addWidget(m_stop);*/
-//}
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::createLayouts:
 //
@@ -212,31 +224,87 @@ MainWindow::createLayouts()
 	grid->addWidget(m_panel[2], 1, 2);
 
 	// add widgets to the splitters
-	QWidget *buttonwidget = new QWidget(m_labelSide[0]);
-	m_buttonlayout = new QHBoxLayout;
-	m_play = new QPushButton("Play");
-	m_pause = new QPushButton("Pause");
-	m_stop = new QPushButton("Stop");
-	m_nextsong = new QPushButton("Next");
+	QWidget *buttonwidget = new QWidget;
+    m_buttonlayout = new QHBoxLayout;
+	//m_play = new QPushButton("Play");
+	m_play = new QToolButton;
+	m_stop = new QToolButton;
+	m_prevsong = new QToolButton;
+	m_nextsong = new QToolButton;
+	m_pause = new QToolButton;
+    m_repeat = new QToolButton;
+    m_repeat->setCheckable(true);
+    m_repeat->setChecked(false);
+    m_shuffle = new QToolButton;
+    m_shuffle->setCheckable(true);
+    m_shuffle->setChecked(false);
+    m_play->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
+	m_stop->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
+	m_prevsong->setIcon(style()->standardIcon(QStyle::SP_MediaSkipBackward));
+	m_nextsong->setIcon(style()->standardIcon(QStyle::SP_MediaSkipForward));
+	m_pause->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
+    m_repeat->setIcon(QIcon(":/Resources/Repeat.png"));
+    m_repeat->setIconSize(QSize(16.5,16.5));
+    m_shuffle->setIcon(QIcon(":/Resources/Shuffle.png"));
+    m_shuffle->setIconSize(QSize(16.5,16.5));
+
+	m_albumleft = new QToolButton;
+	m_albumright = new QToolButton;
+	m_albumleft->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
+	m_albumright->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
+	
+	//m_pause = new QPushButton("Pause");
+	//m_stop = new QPushButton("Stop");
+	//m_nextsong = new QPushButton("Next");
+    m_volumeSlider = new QSlider(Qt::Horizontal, buttonwidget);
+    m_volumeSlider->setRange(0, 100);
+    m_volumeSlider->setSliderPosition(80);
+    //m_volumeSlider->setMaximumWidth(100);
+	//m_volumeSlider->setMaximumWidth(50);
+    m_timeLabel = new QLabel;
+    m_timeLabel ->setText("00:00 / 00:00");
+    m_timeSlider = new QSlider(Qt::Horizontal, buttonwidget);
+    m_timeSlider ->setRange(0, 0);
+    //m_timeSlider->setMaximumWidth(500);
+	m_buttonlayout ->addWidget(m_albumleft);
+    m_buttonlayout ->addWidget(m_volumeSlider);
+	m_buttonlayout ->addWidget(m_prevsong);
+	m_buttonlayout ->addWidget(m_stop);
 	m_buttonlayout ->addWidget(m_play);
 	m_buttonlayout ->addWidget(m_pause);
-	m_buttonlayout ->addWidget(m_stop);
 	m_buttonlayout ->addWidget(m_nextsong);
+    m_buttonlayout ->addWidget(m_repeat);
+    m_buttonlayout ->addWidget(m_shuffle);
+    m_buttonlayout ->addWidget(m_timeSlider);
+    m_buttonlayout ->addWidget(m_timeLabel);
+	m_buttonlayout ->addWidget(m_albumright);
 	buttonwidget ->setLayout(m_buttonlayout);
+	buttonwidget ->setMaximumHeight(50);
+    buttonwidget ->setMaximumWidth(500);
 	
-	m_leftSplit ->addWidget(m_labelSide[0]);
-	m_leftSplit ->addWidget(m_labelSide[1]);
-	m_rightSplit->addWidget(widget );
+    //m_leftSplit ->addWidget(m_volumeSlider);
+	//m_leftSplit ->addWidget(m_labelSide[0]);
+	//m_leftSplit ->addWidget(m_labelSide[1]);
+	m_rightSplit->addWidget(widget);
+	
 	m_rightSplit->addWidget(m_table);
-
+	m_mainBox-> addWidget(m_squares);
+	m_mainBox-> setAlignment(m_squares, Qt::AlignHCenter);
+	m_mainBox-> addWidget(buttonwidget);
+    m_mainBox-> setAlignment(buttonwidget, Qt::AlignHCenter);
+	m_songSplitter->resize(830,300);
+	//m_songSplitter->setSizePolicy(QSizePolicy::Expanding);
+	m_songSplitter->adjustSize();
+	m_mainBox-> addWidget(m_songSplitter);
+	m_mainBox-> setAlignment(m_songSplitter, Qt::AlignHCenter);
+	
+	//m_mainBox-> setAlignment(m_songSplitter, Qt::AlignHCenter);
+	m_mainWidget ->setLayout(m_mainBox);
 	// set main splitter sizes
-	setSizes(m_mainSplit, (int)(width ()*.25), (int)(width ()*.75));
-	setSizes(m_leftSplit, (int)(height()*.5), (int)(height()*.5));
-	setSizes(m_rightSplit,(int)(height()*.4), (int)(height()*.6));
+	//setSizes(m_mainSplit, (int)(width ()*.32), (int)(width ()*.68));
+	//setSizes(m_leftSplit, (int)(height()*.5), (int)(height()*.5));
+	setSizes(m_rightSplit,(int)(height()*.15), (int)(height()*.30));
 }
-
-
-
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -349,7 +417,7 @@ MainWindow::traverseDirs(QString path)
 
 		// init list with default values: ""
 		for(int j=0; j<=COLS; j++)
-			list.insert(j, "");
+			list.insert(j, "N/A");
 
 		// store file pathname into 0th position in list
 		QFileInfo fileInfo = listFiles.at(i);
@@ -401,7 +469,7 @@ MainWindow::traverseDirs(QString path)
 	
 	// recursively descend through all subdirectories
 	for(int i=0; i<listDirs.size(); i++) {
-		QFileInfo fileInfo = listDirs.at(i);
+        QFileInfo fileInfo = listDirs.at(i);
 		traverseDirs( fileInfo.filePath() );
 	}
 
@@ -455,7 +523,6 @@ MainWindow::s_load()
 
         traverseDirs(m_directory);
 	initLists();
-
 	m_progressBar->close(); 
 }
 
@@ -561,7 +628,20 @@ MainWindow::s_about()
 void MainWindow::s_playbutton(){
 	s_play(m_table->currentItem());
 }
+void MainWindow::s_prevsong()
+{
+    if(m_table->currentItem() == NULL)
+        return;
+    QTableWidgetItem *temp = m_table->currentItem();
+    if(temp->row() == 0)
+        temp = m_table->item(m_table->rowCount()-1,0);
+    else temp = m_table->item(temp->row()-1,0);
+    m_table->setCurrentItem(temp);
+    s_play(m_table->currentItem());
+}
 void MainWindow::s_nextsong(){
+    if(m_table->currentItem() == NULL)
+        return;
 	QTableWidgetItem *temp = m_table->currentItem();
 	if(temp->row() == m_table->rowCount()-1)
 		temp = m_table->item(0,0);
@@ -573,6 +653,40 @@ void MainWindow::s_nextsong(){
 void MainWindow::s_pausebutton(){
     m_mediaplayer->pause();
 }
+
+void MainWindow::s_setVolume(int Volume){
+    m_mediaplayer->setVolume(Volume);
+}
+
+void MainWindow::s_setPosition(qint64 Position){
+    m_timeSlider->setValue(Position);
+}
+
+void MainWindow::s_seek(int newPosition){
+    qint64 position = (qint64)newPosition;
+    m_mediaplayer->setPosition(position);
+}
+
+void MainWindow::s_updateLabel(qint64 Time){
+    int endSecond = ((int)m_mediaplayer->duration() / 1000)%60;
+    int endMinute = ((int)m_mediaplayer->duration() / 1000)/60;
+    QString endTime;
+    if(endSecond < 10)
+        endTime = QString("%1:0%2").arg(endMinute).arg(endSecond);
+    else endTime = QString("%1:%2").arg(endMinute).arg(endSecond);
+
+    int currentSecond = ((int)m_mediaplayer->position() / 1000)%60;
+    int currentMinute = ((int)m_mediaplayer->position() / 1000)/60;
+    QString currentTime;
+    if(currentSecond < 10)
+        currentTime = QString("%1:0%2").arg(currentMinute).arg(currentSecond);
+    else currentTime = QString("%1:%2").arg(currentMinute).arg(currentSecond);
+    QString timeLabel = " / ";
+    timeLabel.prepend(currentTime);
+    timeLabel.append(endTime);
+    m_timeLabel->setText(timeLabel);
+}
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::s_play:
 //
@@ -583,7 +697,9 @@ void MainWindow::s_pausebutton(){
 void
 MainWindow::s_play(QTableWidgetItem *item)
 {
-	if(m_mediaplayer->state() == 2){
+    if(item == NULL)
+        return;
+    if(m_mediaplayer->state() == 2){
         qDebug("Resuming from paused state \n");
         m_mediaplayer->play();
         return;
@@ -591,14 +707,11 @@ MainWindow::s_play(QTableWidgetItem *item)
 	item = m_table->item(item->row(),0);
 	QTextStream out(stdout);
 	out << QString("s_play1\n");
-	//if (mediaplayer->error() != 0) return;
-	//QString temp_title = QString("%1").arg(m_listSongs[i][PATH]);
 	for(int i=0; i<m_listSongs.size(); i++) {
 		// skip over songs whose title does not match
 		if(m_listSongs[i][TITLE] != item->text()) continue;
 		QString temp_title = QString("%1").arg(m_listSongs[i][PATH]);
 		m_mediaplayer->setMedia(QUrl::fromLocalFile(temp_title));
-		m_mediaplayer->setVolume(100);
 		m_mediaplayer->play();
 		qDebug("Trying to play \n");
 		if(m_stop->isDown()){
@@ -609,12 +722,41 @@ MainWindow::s_play(QTableWidgetItem *item)
 		return;
 	}
 }
-void MainWindow::statusChanged(QMediaPlayer::MediaStatus status)
+
+void MainWindow::timeStatusChanged(QMediaPlayer::MediaStatus status)
 {
-	if(status == QMediaPlayer::LoadedMedia){
-		qDebug("Media is loaded");
-		/*mediaplayer->setVolume(100);
-		mediaplayer->play();
-		cout << "status changed \n" ;*/
-	}
+     if(status == QMediaPlayer::BufferedMedia)
+         m_timeSlider->setRange(0,m_mediaplayer->duration());
+}
+
+void MainWindow::repeatStatusChanged(QMediaPlayer::MediaStatus status)
+{
+    if(status == QMediaPlayer::EndOfMedia && m_repeat->isChecked() == true){
+        m_mediaplayer->play();
+    }
+}
+
+void MainWindow::shuffleStatusChanged(QMediaPlayer::MediaStatus status)
+{
+    if(status == QMediaPlayer::EndOfMedia && m_shuffle->isChecked() == true){
+        QTableWidgetItem *currentsong = m_table->currentItem();
+        QTableWidgetItem *nextsong = m_table->currentItem();
+        int list_length = m_table->rowCount();
+        while(nextsong == currentsong)
+            nextsong = m_table->item(rand() % list_length,0);
+        m_table->setCurrentItem(nextsong);
+        s_play(m_table->currentItem());
+    }
+}
+
+void MainWindow::repeat_off()
+{
+    if(m_shuffle->isChecked() == true)
+        m_repeat->setChecked(false);
+}
+
+void MainWindow::shuffle_off()
+{
+    if(m_repeat->isChecked() == true)
+        m_shuffle->setChecked(false);
 }

@@ -151,7 +151,7 @@ MainWindow::createWidgets()
 	m_mainBox = new QVBoxLayout;
 	m_songSplitter = new QWidget;
 	m_popup = new QWidget();
-	m_popup->setWindowFlags(Qt::Popup);
+	m_popup->setWindowFlags(Qt::Window);
 	
 	m_squares = new SquaresWidget;
 	// initialize splitters

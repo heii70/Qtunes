@@ -6,6 +6,7 @@
 //#include <QtOpenGL>
 #include <glu.h>
 #include <QtWidgets>
+#include <QGLWidget>
 using namespace std;
 
 typedef struct {
@@ -33,7 +34,7 @@ SquaresWidget::SquaresWidget(){
 	m_directory = ".";
 	
 	m_timer = new QTimer(this);
-	m_timer->start(50);
+	m_timer->start(16);
 	connect(m_timer, SIGNAL(timeout()), this, SLOT(update()));
 }
 
@@ -104,6 +105,37 @@ void SquaresWidget::traverseDirs(QString path){
 	return;
 }
 
+void SquaresWidget::s_mp3art(QList<QImage> *artlist){
+	qDebug("s_mp3art");
+	//if(artlist.size()>0){
+		m_recordsloaded = true;
+		m_numrecords = artlist->size();
+	//}
+	records = (Record*) malloc(sizeof(Record) * m_numrecords);
+	
+	glEnable(GL_TEXTURE_2D);
+	int		ww, hh;
+	//unsigned char  *texData;
+	for(int i=0; i < m_numrecords; i++) {
+		QString temp_string = QString("record %1").arg(i+1);
+		sprintf(records[i].imageFilename,"%s",temp_string.toStdString().c_str());
+		records[i].width  = 4;
+		records[i].height = 4;
+		//readPPM(records[i].imageFilename, ww, hh, texData);
+
+	    glGenTextures  (1, &records[i].texId);
+	    glBindTexture  (GL_TEXTURE_2D,  records[i].texId);
+	    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
+		QImage image_gl = QGLWidget::convertToGLFormat(artlist->at(i));
+	    glTexImage2D   (GL_TEXTURE_2D, 0, GL_RGBA, image_gl.width(), image_gl.height(), 0, GL_RGBA,
+			    GL_UNSIGNED_BYTE, image_gl.bits());
+	}
+	glDisable(GL_TEXTURE_2D);
+}
+
 
 void SquaresWidget::initializeGL(){
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); //make last parameter 1
@@ -116,9 +148,10 @@ void SquaresWidget::resizeGL(int w, int h){
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(60, (float) w/h, 1, 1000);
-	gluLookAt(0,0,3,
+	gluLookAt(0,0,2.8,
 				0,0,1,
 				0,1,0);
+	//glOrtho(-6, 6, -2, 2, -1, 1);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
@@ -127,12 +160,13 @@ void SquaresWidget::paintGL(){
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
 	if(m_translatebuffer != m_translate){
-		if(m_translate - m_translatebuffer < -0.05) m_translatebuffer -= 0.1;
-		else if(m_translate - m_translatebuffer > 0.05) m_translatebuffer += 0.1;
+		if(m_translate - m_translatebuffer < -0.001) m_translatebuffer -= 0.04;
+		else if(m_translate - m_translatebuffer > 0.001) m_translatebuffer += 0.04;
 	}
 	glTranslatef(m_translatebuffer,0,0);
-	printf("b:%f | t:%f\n",m_translatebuffer, m_translate);
-	if(!m_recordsloaded){
+	//printf("b:%f | t:%f\n",m_translatebuffer, m_translate);
+	//if(!m_recordsloaded){
+	if(false){
 		glTranslatef(-6,0,0);
 		for(int i = 1; i < 12; i++){
 			glTranslatef(1,0,0);
@@ -167,18 +201,18 @@ void SquaresWidget::paintGL(){
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			if(i <= (float)m_numrecords/2 - m_translatebuffer){
 				glBegin(GL_QUADS);
-					glTexCoord2f(1, 1);	glVertex3f(1,-1,0);
-					glTexCoord2f(0, 1);	glVertex3f(-1,-1,0);
-					glTexCoord2f(0, 0);	glVertex3f(-1,1,0);
-					glTexCoord2f(1, 0);	glVertex3f(1,1,0);
+					glTexCoord2f(1, 0);	glVertex3f(1,-1,0);
+					glTexCoord2f(0, 0);	glVertex3f(-1,-1,0);
+					glTexCoord2f(0, 1);	glVertex3f(-1,1,0);
+					glTexCoord2f(1, 1);	glVertex3f(1,1,0);
 				glEnd();
 			}
 			else{
 				glBegin(GL_QUADS);
-					glTexCoord2f(1, 1);	glVertex3f(-1,-1,0);
-					glTexCoord2f(0, 1);	glVertex3f(1,-1,0);
-					glTexCoord2f(0, 0);	glVertex3f(1,1,0);
-					glTexCoord2f(1, 0);	glVertex3f(-1,1,0);
+					glTexCoord2f(1, 0);	glVertex3f(-1,-1,0);
+					glTexCoord2f(0, 0);	glVertex3f(1,-1,0);
+					glTexCoord2f(0, 1);	glVertex3f(1,1,0);
+					glTexCoord2f(1, 1);	glVertex3f(-1,1,0);
 				glEnd();
 			}
 			glDisable(GL_TEXTURE_2D);

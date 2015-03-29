@@ -13,6 +13,7 @@ public slots:
 	void s_shiftleft();
 	void s_shiftright();
 	void s_loadart();
+	void s_mp3art(QList<QImage> *);
 protected:
 	void initializeGL();
 	void resizeGL(int w, int h);

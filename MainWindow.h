@@ -12,6 +12,8 @@
 #include "qmediaplayer.h"
 #include <QtWidgets>
 #include "squareswidget.h"
+#include <tag.h>
+#include <id3v2tag.h>
 class SquaresWidget;
 class QMediaPlayer;
 
@@ -36,6 +38,8 @@ public:
 
 	//! Destructor.
 	~MainWindow();
+signals:
+	void s_artLoaded(QList<QImage> *);
 
 public slots:
 	// slots
@@ -51,6 +55,9 @@ public slots:
 	void s_prevsong();
 	void s_nextsong();
     void s_setVolume(int);
+	void s_setPosition(qint64);
+    void s_seek(int);
+    void s_updateLabel(qint64);
 
 private:
 	void createActions();
@@ -64,6 +71,7 @@ private:
 	void redrawLists  (QListWidgetItem *, int);
 	void traverseDirs (QString);
 	void setSizes	  (QSplitter *, int, int);
+	QImage imageForTag(TagLib::ID3v2::Tag *tag);
 
 	// actions
 	QAction		*m_loadAction;
@@ -78,8 +86,9 @@ private:
 	QWidget *m_mainWidget;
 	QWidget *m_songSplitter;
 	QVBoxLayout *m_mainBox;
-	//QSplitter	*m_mainSplit;
-	//QSplitter	*m_leftSplit;
+	
+	QWidget *m_popup;
+	
 	QSplitter	*m_rightSplit;
 	//QLabel		*m_labelSide[2];
 	QLabel		*m_label[3];
@@ -94,12 +103,20 @@ private:
 	QToolButton *m_albumleft;
 	QToolButton *m_albumright;
 	QToolButton *m_loadart;
+	QToolButton *m_showimage;
 	
     QSlider *m_volumeSlider;
+	QSlider *m_timeSlider;
+    QLabel *m_timeLabel;
+    QLabel *m_imagelabel;
 	QHBoxLayout *m_buttonlayout;
+	QHBoxLayout *m_sliderlayout; 
+	QImage *m_resizedArt; 
 	
 	SquaresWidget *m_squares;
 	QMediaPlayer *m_mediaplayer;
+	
+	QList <QImage> *m_artlist;
 
 	// string lists
 	QString		   m_directory;

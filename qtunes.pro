@@ -3,7 +3,7 @@
 ######################################################################
 
 QT -= core gui
-QT += multimedia
+QT += multimedia opengl
 QT += widgets
 
 INCLUDEPATH += -I /usr/local/include/taglib -I /opt/X11

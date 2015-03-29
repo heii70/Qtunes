@@ -24,7 +24,7 @@ private:
 	int readPPM(char *file, int &width, int &height,
 		unsigned char* &image);
 	float m_translate, m_translatebuffer;
-	bool m_recordsloaded;
+	bool m_recordsloaded, m_frommp3;
 	int m_numrecords;
 	int m_width, m_height, m_scale;
 	QString m_directory;

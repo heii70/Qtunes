@@ -30,6 +30,7 @@ SquaresWidget::SquaresWidget(){
 	m_translate = 0;
 	m_translatebuffer = 0;
 	m_recordsloaded = false;
+	m_frommp3 = false;
 	m_numrecords = 0;
 	m_directory = ".";
 	
@@ -58,6 +59,7 @@ void SquaresWidget::s_loadart(){
 }
 void SquaresWidget::traverseDirs(QString path){
 	//Setting up the traversal of directories
+	m_frommp3 = false;
 	QString		key, val;
 	QStringList	list;
 	QDir dir(path);
@@ -107,6 +109,7 @@ void SquaresWidget::traverseDirs(QString path){
 
 void SquaresWidget::s_mp3art(QList<QImage> *artlist){
 	qDebug("s_mp3art");
+	m_frommp3 = true;
 	//if(artlist.size()>0){
 		m_recordsloaded = true;
 		m_numrecords = artlist->size();
@@ -200,20 +203,40 @@ void SquaresWidget::paintGL(){
 			glBindTexture(GL_TEXTURE_2D, records[i].texId);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			if(i <= (float)m_numrecords/2 - m_translatebuffer){
-				glBegin(GL_QUADS);
-					glTexCoord2f(1, 0);	glVertex3f(1,-1,0);
-					glTexCoord2f(0, 0);	glVertex3f(-1,-1,0);
-					glTexCoord2f(0, 1);	glVertex3f(-1,1,0);
-					glTexCoord2f(1, 1);	glVertex3f(1,1,0);
-				glEnd();
+				if(m_frommp3){
+					glBegin(GL_QUADS);
+						glTexCoord2f(1, 0);	glVertex3f(1,-1,0);
+						glTexCoord2f(0, 0);	glVertex3f(-1,-1,0);
+						glTexCoord2f(0, 1);	glVertex3f(-1,1,0);
+						glTexCoord2f(1, 1);	glVertex3f(1,1,0);
+					glEnd();
+				}
+				else{
+					glBegin(GL_QUADS);
+						glTexCoord2f(1, 1);	glVertex3f(1,-1,0);
+						glTexCoord2f(0, 1);	glVertex3f(-1,-1,0);
+						glTexCoord2f(0, 0);	glVertex3f(-1,1,0);
+						glTexCoord2f(1, 0);	glVertex3f(1,1,0);
+					glEnd();
+				}
 			}
 			else{
-				glBegin(GL_QUADS);
-					glTexCoord2f(1, 0);	glVertex3f(-1,-1,0);
-					glTexCoord2f(0, 0);	glVertex3f(1,-1,0);
-					glTexCoord2f(0, 1);	glVertex3f(1,1,0);
-					glTexCoord2f(1, 1);	glVertex3f(-1,1,0);
-				glEnd();
+				if(m_frommp3){
+					glBegin(GL_QUADS);
+						glTexCoord2f(1, 0);	glVertex3f(-1,-1,0);
+						glTexCoord2f(0, 0);	glVertex3f(1,-1,0);
+						glTexCoord2f(0, 1);	glVertex3f(1,1,0);
+						glTexCoord2f(1, 1);	glVertex3f(-1,1,0);
+					glEnd();
+				}
+				else{
+					glBegin(GL_QUADS);
+						glTexCoord2f(1, 1);	glVertex3f(-1,-1,0);
+						glTexCoord2f(0, 1);	glVertex3f(1,-1,0);
+						glTexCoord2f(0, 0);	glVertex3f(1,1,0);
+						glTexCoord2f(1, 0);	glVertex3f(-1,1,0);
+					glEnd();
+				}
 			}
 			glDisable(GL_TEXTURE_2D);
 			glColor3f(1, (float)215/255, 0);

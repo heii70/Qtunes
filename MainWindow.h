@@ -111,7 +111,8 @@ private:
     QLabel *m_imagelabel;
 	QHBoxLayout *m_buttonlayout;
 	QHBoxLayout *m_sliderlayout; 
-	QImage *m_resizedArt; 
+	QImage m_resizedArt; 
+	QImage m_tdResizedArt;
 	
 	SquaresWidget *m_squares;
 	QMediaPlayer *m_mediaplayer;

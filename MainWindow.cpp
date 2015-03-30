@@ -248,7 +248,7 @@ MainWindow::createLayouts()
 	m_loadart = new QToolButton;
 	m_loadart->setIcon(style()->standardIcon(QStyle::SP_DirIcon));
 	
-	m_resizedArt = new QImage;
+	//m_resizedArt = new QImage;
 	m_imagelabel = new QLabel; 
 	m_imagelabel ->setText("No Art");
 	//m_pause = new QPushButton("Pause");
@@ -414,7 +414,6 @@ MainWindow::traverseDirs(QString path)
 {
 	QString		key, val;
 	QStringList	list;
-
 	// init listDirs with subdirectories of path
 	QDir dir(path);
 	dir.setFilter(QDir::AllDirs | QDir::NoDotAndDotDot);
@@ -481,13 +480,13 @@ MainWindow::traverseDirs(QString path)
 		// uninitialized fields are empty strings
 		m_listSongs << list;
 		
-		QByteArray ba_temp = fileInfo.filePath().toLocal8Bit();
-		const char* t_filepath = ba_temp.data();
-		TagLib::MPEG::File audioFile(t_filepath);
-		TagLib::ID3v2::Tag *tag = audioFile.ID3v2Tag(true);
+		/*QByteArray ba_temp = (fileInfo.filePath()).toLocal8Bit();
+		const char* t_filepath = ba_temp.constData();*/
+		TagLib::MPEG::File audioFile(QFile::encodeName(fileInfo.filePath()).constData());
+		TagLib::ID3v2::Tag *tag = audioFile.ID3v2Tag();
 		QImage coverArt = imageForTag(tag);
-		QImage resizedArt = coverArt.scaled(250,250,Qt::KeepAspectRatio);
-		m_artlist->append(resizedArt);
+		m_tdResizedArt = coverArt.scaled(250,250,Qt::KeepAspectRatio);
+		m_artlist->append(m_tdResizedArt);
 	}
 
 	// base case: no more subdirectories
@@ -499,8 +498,11 @@ MainWindow::traverseDirs(QString path)
 		traverseDirs( fileInfo.filePath() );
 	}
 	qDebug("Trying to emit");
-	emit s_artLoaded(m_artlist);
-	qDebug("Emitted \n size: %d",m_artlist->size());
+	if(listDirs.size() == 0){
+		emit s_artLoaded(m_artlist);
+		qDebug("Emitted \n size: %d",m_artlist->size());
+		return;
+	}
 	return;
 }		
 
@@ -728,10 +730,12 @@ QImage MainWindow::imageForTag(TagLib::ID3v2::Tag *tag)
     TagLib::ID3v2::FrameList list = tag->frameList("APIC");
 
     QImage image;
-
-    if(list.isEmpty())
+	//if(true){
+    if(list.isEmpty()){
+		qDebug("No image found");
+		image.load("/Users/matt/Desktop/csc221/qtunes/cover.png");
         return image;
-
+	}
     TagLib::ID3v2::AttachedPictureFrame *frame =
         static_cast<TagLib::ID3v2::AttachedPictureFrame *>(list.front());
 
@@ -777,7 +781,8 @@ MainWindow::s_play(QTableWidgetItem *item)
         TagLib::MPEG::File audioFile(filepath); //Creates a MPEG file from filepath
         TagLib::ID3v2::Tag *tag = audioFile.ID3v2Tag(true); //Creates ID3v2 *Tag to be used in following function
         QImage coverArt = imageForTag(tag);
-        QImage m_resizedArt = coverArt.scaled(250,250,Qt::KeepAspectRatio);
+		
+        m_resizedArt = coverArt.scaled(250,250,Qt::KeepAspectRatio);
         m_imagelabel->setScaledContents(true);
         m_imagelabel->setPixmap(QPixmap::fromImage(m_resizedArt));
 		qDebug("Trying to play \n");

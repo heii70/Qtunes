@@ -9,6 +9,7 @@
 // 				added tag support with TagLib
 //				adding mediplayer functionality using a QMediaPlayer object
 // ======================================================================
+#define TAGLIB_STATIC
 #include <QTextStream>
 #include <QtWidgets>
 #include <QLabel> 
@@ -29,6 +30,8 @@
 #include <id3v2frame.h>
 #include <id3v2header.h>
 #include <attachedpictureframe.h>
+#include <QIcon>
+#include <Qsize>
 
 using namespace std;
 using namespace TagLib; 
@@ -75,6 +78,8 @@ MainWindow::MainWindow	(QString program)
 	connect(m_pause, SIGNAL(clicked()), this, SLOT(s_pausebutton()));
 	connect(m_nextsong, SIGNAL(clicked()), this, SLOT(s_nextsong()));
 	connect(m_prevsong, SIGNAL(clicked()), this, SLOT(s_prevsong()));
+    connect(m_repeat, SIGNAL(toggled(bool)), this, SLOT(shuffle_off()));
+    connect(m_shuffle, SIGNAL(toggled(bool)), this, SLOT(repeat_off()));
 	connect(m_mediaplayer, SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),
             this, SLOT(statusChanged(QMediaPlayer::MediaStatus)));
     connect(m_volumeSlider, SIGNAL(valueChanged(int)), this, SLOT(s_setVolume(int)));
@@ -234,12 +239,22 @@ MainWindow::createLayouts()
 	m_prevsong = new QToolButton;
 	m_nextsong = new QToolButton;
 	m_pause = new QToolButton;
+    m_repeat = new QToolButton;
+    m_repeat->setCheckable(true);
+    m_repeat->setChecked(false);
+    m_shuffle = new QToolButton;
+    m_shuffle->setCheckable(true);
+    m_shuffle->setChecked(false);
     m_play->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
 	m_stop->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
 	m_prevsong->setIcon(style()->standardIcon(QStyle::SP_MediaSkipBackward));
 	m_nextsong->setIcon(style()->standardIcon(QStyle::SP_MediaSkipForward));
 	m_pause->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
-	
+    m_repeat->setIcon(QIcon(":/Resources/Repeat.png"));
+    m_repeat->setIconSize(QSize(16.5,16.5));
+    m_shuffle->setIcon(QIcon(":/Resources/Shuffle.png"));
+    m_shuffle->setIconSize(QSize(16.5,16.5));
+
 	m_albumleft = new QToolButton;
 	m_albumright = new QToolButton;
 	m_albumleft->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
@@ -272,8 +287,11 @@ MainWindow::createLayouts()
 	m_buttonlayout ->addWidget(m_play);
 	m_buttonlayout ->addWidget(m_pause);
 	m_buttonlayout ->addWidget(m_nextsong);
+    m_buttonlayout ->addWidget(m_repeat);
+    m_buttonlayout ->addWidget(m_shuffle);
 	m_buttonlayout ->addWidget(m_timeLabel); 
 	m_buttonlayout ->addWidget(m_albumright);
+
 	buttonwidget ->setLayout(m_buttonlayout);
 	buttonwidget ->setMaximumHeight(50);
 	buttonwidget ->setMaximumWidth(500);
@@ -733,7 +751,7 @@ QImage MainWindow::imageForTag(TagLib::ID3v2::Tag *tag)
 	//if(true){
     if(list.isEmpty()){
 		qDebug("No image found");
-		image.load("/Users/matt/Desktop/csc221/qtunes/cover.png");
+        image.load(":/Resources/Default_Music.ico");
         return image;
 	}
     TagLib::ID3v2::AttachedPictureFrame *frame =
@@ -796,15 +814,33 @@ MainWindow::s_play(QTableWidgetItem *item)
 }
 void MainWindow::statusChanged(QMediaPlayer::MediaStatus status)
 {
-	m_mediaplayer->play();
-	if(status == QMediaPlayer::LoadedMedia){
-		qDebug("Media is loaded");
-		/*mediaplayer->setVolume(100);
-		mediaplayer->play();
-		cout << "status changed \n" ;*/
-	}
 	if(status == QMediaPlayer::BufferedMedia){
         m_timeSlider->setRange(0,m_mediaplayer->duration());
         qDebug("Media is buffered");
     }
+
+    if(status == QMediaPlayer::EndOfMedia && m_repeat->isChecked() == true)
+        m_mediaplayer->play();
+
+    if(status == QMediaPlayer::EndOfMedia && m_shuffle->isChecked() == true){
+        QTableWidgetItem *currentsong = m_table->currentItem();
+        QTableWidgetItem *nextsong = m_table->currentItem();
+        int list_length = m_table->rowCount();
+        while(nextsong == currentsong)
+            nextsong = m_table->item(rand() % list_length,0);
+        m_table->setCurrentItem(nextsong);
+        s_play(m_table->currentItem());
+    }
+}
+
+void MainWindow::repeat_off()
+{
+    if(m_shuffle->isChecked() == true)
+        m_repeat->setChecked(false);
+}
+
+void MainWindow::shuffle_off()
+{
+    if(m_repeat->isChecked() == true)
+        m_shuffle->setChecked(false);
 }

@@ -53,11 +53,13 @@ public slots:
 	void s_playbutton();
     void s_pausebutton();
 	void s_prevsong();
-	void s_nextsong();
+    void s_nextsong();
     void s_setVolume(int);
 	void s_setPosition(qint64);
     void s_seek(int);
     void s_updateLabel(qint64);
+    void repeat_off();
+    void shuffle_off();
 
 private:
 	void createActions();
@@ -100,6 +102,8 @@ private:
     QToolButton *m_pause;
 	QToolButton *m_prevsong;
     QToolButton *m_nextsong;
+    QToolButton *m_repeat;
+    QToolButton *m_shuffle;
 	QToolButton *m_albumleft;
 	QToolButton *m_albumright;
 	QToolButton *m_loadart;

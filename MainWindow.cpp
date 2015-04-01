@@ -9,7 +9,8 @@
 // 				added tag support with TagLib
 //				adding mediplayer functionality using a QMediaPlayer object
 // ======================================================================
-#define TAGLIB_STATIC
+
+//#define TAGLIB_STATIC
 #include <QTextStream>
 #include <QtWidgets>
 #include <QLabel> 
@@ -32,9 +33,11 @@
 #include <attachedpictureframe.h>
 #include <QIcon>
 #include <Qsize>
+#include <tbytevector.h>
+#include <taglib.h>
 
 using namespace std;
-using namespace TagLib; 
+//using namespace TagLib;
 
 enum {TITLE, TRACK, TIME, ARTIST, ALBUM, GENRE, PATH};
 const int COLS = PATH;
@@ -202,7 +205,7 @@ MainWindow::createWidgets()
 
 	// init signal/slot connections
 	connect(m_panel[0],	SIGNAL(itemClicked(QListWidgetItem*)),
-		this,		  SLOT(s_panel1   (QListWidgetItem*)));
+        this,		  SLOT(s_panel1   (QListWidgetItem*)));
         connect(m_panel[1],	SIGNAL(itemClicked(QListWidgetItem*)),
 		this,		  SLOT(s_panel2   (QListWidgetItem*)));
         connect(m_panel[2],	SIGNAL(itemClicked(QListWidgetItem*)),
@@ -351,7 +354,7 @@ void
 MainWindow::initLists()
 {
 	// error checking
-	if(m_listSongs.isEmpty()) return;
+    if(m_listSongs.isEmpty()) return;
 
 	// create separate lists for genres, artists, and albums
 	for(int i=0; i<m_listSongs.size(); i++) {
@@ -496,15 +499,25 @@ MainWindow::traverseDirs(QString path)
 
 		// append list (song data) into songlist m_listSongs;
 		// uninitialized fields are empty strings
-		m_listSongs << list;
-		
-		/*QByteArray ba_temp = (fileInfo.filePath()).toLocal8Bit();
-		const char* t_filepath = ba_temp.constData();*/
-		TagLib::MPEG::File audioFile(QFile::encodeName(fileInfo.filePath()).constData());
-		TagLib::ID3v2::Tag *tag = audioFile.ID3v2Tag();
-		QImage coverArt = imageForTag(tag);
-		m_tdResizedArt = coverArt.scaled(250,250,Qt::KeepAspectRatio);
-		m_artlist->append(m_tdResizedArt);
+        m_listSongs << list;
+
+        QString temp_path = QString("%1").arg(m_listSongs[i][PATH]);
+        QByteArray ba_temp = temp_path.toLocal8Bit();
+        const char* filepath = ba_temp.data();
+        qDebug("Trying to load audiofile");
+        //TagLib::MPEG::File audioFile(QFile::encodeName(fileInfo.filePath()).constData());
+        TagLib::MPEG::File audioFile(filepath);
+        qDebug("audiofile loaded");
+        TagLib::ID3v2::Tag *tag = new TagLib::ID3v2::Tag();
+        qDebug("Testing of tag:");
+        //QString test = QString("title:%1\nartist:%2").arg(tag->title()).arg(tag->artist());
+        qDebug() << "title:" << TStringToQString(tag->title());
+        tag = audioFile.ID3v2Tag(true);
+        qDebug("tag converted");
+        QImage coverArt = imageForTag(tag);
+        qDebug("imageForTag executed");
+        m_tdResizedArt = coverArt.scaled(250,250,Qt::KeepAspectRatio);
+        m_artlist->append(m_tdResizedArt);
 	}
 
 	// base case: no more subdirectories
@@ -517,7 +530,7 @@ MainWindow::traverseDirs(QString path)
 	}
 	qDebug("Trying to emit");
 	if(listDirs.size() == 0){
-		emit s_artLoaded(m_artlist);
+        emit s_artLoaded(m_artlist);
 		qDebug("Emitted \n size: %d",m_artlist->size());
 		return;
 	}
@@ -745,13 +758,24 @@ void MainWindow::s_updateLabel(qint64 Time){
 
 QImage MainWindow::imageForTag(TagLib::ID3v2::Tag *tag)
 {
-    TagLib::ID3v2::FrameList list = tag->frameList("APIC");
+    qDebug("start of imageForTag");
+    const TagLib::ByteVector framepic = TagLib::ByteVector("APIC");
+    qDebug("Made bytevector");
+    TagLib::ID3v2::FrameList list;
+    qDebug("Made list");
+    if(!(tag->frameList(framepic)).isEmpty()){
+        qDebug("List was not empty");
+        list = tag->frameListMap()[framepic];
+        list = tag->frameList(framepic);
+    }
 
+    //TagLib::ID3v2::FrameList list = tag->frameListMap()["APIC"];
+    qDebug("list created");
     QImage image;
-	//if(true){
+    //if(false){
     if(list.isEmpty()){
-		qDebug("No image found");
-        image.load(":/Resources/Default_Music.ico");
+        qDebug("No image found");
+        image.load(":/Resources/Default.png");
         return image;
 	}
     TagLib::ID3v2::AttachedPictureFrame *frame =
@@ -781,8 +805,7 @@ MainWindow::s_play(QTableWidgetItem *item)
         return;
     }
 	item = m_table->item(item->row(),0);
-	QTextStream out(stdout);
-	out << QString("s_play1\n");
+    qDebug("s_play1\n");
 	for(int i=0; i<m_listSongs.size(); i++) {
 		// skip over songs whose title does not match
 		if(m_listSongs[i][TITLE] != item->text()) continue;
@@ -814,6 +837,9 @@ MainWindow::s_play(QTableWidgetItem *item)
 }
 void MainWindow::statusChanged(QMediaPlayer::MediaStatus status)
 {
+    m_mediaplayer->play();
+    if(status == QMediaPlayer::LoadedMedia)
+        m_mediaplayer->play();
 	if(status == QMediaPlayer::BufferedMedia){
         m_timeSlider->setRange(0,m_mediaplayer->duration());
         qDebug("Media is buffered");

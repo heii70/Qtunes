@@ -83,7 +83,7 @@ void SquaresWidget::traverseDirs(QString path){
 	//Traversal:
 	for(int i=0; i < listFiles.size(); i++) {
 		QFileInfo fileInfo = listFiles.at(i);
-		sprintf(records[i].imageFilename,"%s",fileInfo.filePath().toStdString().c_str());
+        sprintf_s(records[i].imageFilename,"%s",fileInfo.filePath().toStdString().c_str());
 		//records[i].imageFilename = fileInfo.filePath().toStdString().c_str();
 		records[i].width  = 4;
 		records[i].height = 4;
@@ -121,7 +121,7 @@ void SquaresWidget::s_mp3art(QList<QImage> *artlist){
 	//unsigned char  *texData;
 	for(int i=0; i < m_numrecords; i++) {
 		QString temp_string = QString("record %1").arg(i+1);
-		sprintf(records[i].imageFilename,"%s",temp_string.toStdString().c_str());
+        sprintf_s(records[i].imageFilename,"%s",temp_string.toStdString().c_str());
 		records[i].width  = 4;
 		records[i].height = 4;
 		//readPPM(records[i].imageFilename, ww, hh, texData);

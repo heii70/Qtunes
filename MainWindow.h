@@ -6,7 +6,6 @@
 //
 // Written by: George Wolberg, 2015
 // ======================================================================
-
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 #include "qmediaplayer.h"
@@ -117,7 +116,7 @@ private:
 	QHBoxLayout *m_sliderlayout; 
 	QImage m_resizedArt; 
 	QImage m_tdResizedArt;
-	
+
 	SquaresWidget *m_squares;
 	QMediaPlayer *m_mediaplayer;
 	

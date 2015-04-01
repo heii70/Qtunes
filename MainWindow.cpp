@@ -511,8 +511,8 @@ MainWindow::traverseDirs(QString path)
         TagLib::ID3v2::Tag *tag = new TagLib::ID3v2::Tag();
         qDebug("Testing of tag:");
         //QString test = QString("title:%1\nartist:%2").arg(tag->title()).arg(tag->artist());
-        qDebug() << "title:" << TStringToQString(tag->title());
         tag = audioFile.ID3v2Tag(true);
+        qDebug() << "title:" << TStringToQString(tag->title());
         qDebug("tag converted");
         QImage coverArt = imageForTag(tag);
         qDebug("imageForTag executed");

@@ -39,6 +39,10 @@ SquaresWidget::SquaresWidget(){
 	m_frommp3 = false;
 	m_numrecords = 0;
 	m_directory = ".";
+	m_currentrecord = 0;
+	m_shift = 2;
+	m_albumheight = 1.0;
+	m_initialcall = true;
 	
 	m_timer = new QTimer(this);
 	m_timer->start(16);
@@ -54,7 +58,7 @@ SquaresWidget::~SquaresWidget(){
  * MainWindow that will be emitted when the m_albumleft button
  * is clicked*/
 void SquaresWidget::s_shiftleft(){
-	m_translate += 1;
+	m_translate += m_shift;
 }
 /* s_shiftright() is a slot function that decrements m_translate
  * by 1. This slot function is connected to a signal from
@@ -62,7 +66,7 @@ void SquaresWidget::s_shiftleft(){
  * is clicked
  * */
 void SquaresWidget::s_shiftright(){
-	m_translate -= 1;
+	m_translate -= m_shift;
 }
 /* s_loadart() is a slot function that is connected to a signal
  * from MainWindow that is emitted when the m_loadart button is 
@@ -174,6 +178,10 @@ void SquaresWidget::s_mp3art(QList<QImage> *artlist){
 	glDisable(GL_TEXTURE_2D);
 }
 
+/*void SquaresWidget::s_jumpto(int x){
+	m_translate = 
+}*/
+
 /* initializeGL() is a function that sets up the widget to be used.
  * It clears the widget of any previous colors, enables the widget
  * to display things in 3D correctly, and enables certain shapes to
@@ -212,43 +220,24 @@ void SquaresWidget::paintGL(){
 	// clears 2D and 3D
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-	/* Variables m_translatebuffer and m_translate are used to allow for
-	 * side to side motion in coverflow. If the two variables are not equal,
-	 * then m_translatebuffer is incremented or decremented in small steps
-	 * until it is equal to m_translate. This process allows for sliding
-	 * album art. A translation is then performed on m_translatebuffer.
-	 * */
-	/* NOTE: must be changed-> will set it to be 
-	 * glTranslatef(m_translate+m_translatebuffer) will only be from 0 to 1
-	 * */
 	if(m_translatebuffer != m_translate){
-		if(m_translate - m_translatebuffer < -0.001) m_translatebuffer -= 0.04;
-		else if(m_translate - m_translatebuffer > 0.001) m_translatebuffer += 0.04;
+		if(m_translate - m_translatebuffer < -0.001){
+			m_translatebuffer -= 0.05;
+			m_movingright = true;
+		}
+		else m_movingright = false;
+		if(m_translate - m_translatebuffer > 0.001){
+			m_translatebuffer += 0.05;
+			m_movingleft = true;
+		}
+		else m_movingleft = false;
 	}
 	glTranslatef(m_translatebuffer,0,0);
-	/* This if statement contains code that will create something that looks like
-	 * coverflow, but just with squares (not actual album art). Currently left to
-	 * be false so it does not execute this code. Still, I must stress that this 
-	 * code should be read as this is fundamental in terms of understanding how 
-	 * coverflow is being created
-	 * */
 	if(false){
-		/* translation of -6 in order to center the squares*/
 		glTranslatef(-6,0,0);
-		/* for loop that will create 11 squares to be displayed in the coverflow
-		 * style
-		 * */
 		for(int i = 1; i < 12; i++){
-			/* squares must be translated by 1 to the right so that they do not
-			 * overlap*/
 			glTranslatef(1,0,0);
 			glColor3f((float)i/11,1-(float)i/11,1-(float)i/11);
-			/* glPushMatrix() and glPopMatrix() are used in order to ensure that
-			 * whatever code is executed inbetween these two functions does not
-			 * affect everything else. For example, this ensures that the
-			 * rotation that the glRotatef only rotates the square that is created
-			 * here around the y-axis (and not everything else).
-			 * */
 			glPushMatrix();
 			glRotatef(90,0,1,0);
 			glBegin(GL_POLYGON);
@@ -267,30 +256,58 @@ void SquaresWidget::paintGL(){
 			glPopMatrix();
 		}
 	}
-	/* Everything in this else statement handles the case in which
-	 * album coverflow must be created from .ppm files or from .mp3 files
-	 * */
 	else{
-		/* translation here to center the coverflow*/
-		glTranslatef(-(m_numrecords/2+1),0,0);
-		for(int i = 0; i < m_numrecords; i++){
-			glTranslatef(1,0,0);
+		int albums_shown = 0, main_album = 0;
+		if(m_numrecords < 12) albums_shown = m_numrecords;
+		else albums_shown = 11;
+		/*float temp_shift = m_shift*(main_album+albums_shown/2);
+		if(m_initialcall){
+			m_translate = temp_shift;
+			m_translatebuffer = temp_shift;
+			m_initialcall = false;
+		}
+		glTranslatef(temp_shift-1*m_shift*(albums_shown/2+1),0,0);*/
+		m_currentrecord = (float)m_shift*albums_shown/2 - m_translatebuffer;
+		glTranslatef(-1*m_shift*(albums_shown/2+1),0,0);
+		
+		for(int i = main_album; i < albums_shown + main_album; i++){
+			glTranslatef(m_shift,0,0);
 			glEnable(GL_TEXTURE_2D);
 			glPushMatrix();
-			glRotatef(90,0,1,0);
 			glColor3f(0.8,0.8,0.7);
-			/* glBindTexture will bind the texture of the record
-			 * to the square created
-			 * */
+			//if(i >= m_currentrecord + 0.001 || i <= m_currentrecord - 0.001){
+			if(i*m_shift >= m_currentrecord + 0.01 || i*m_shift <= m_currentrecord - 0.01){
+				float temp_rotation = 90*((m_translate-m_translatebuffer)/m_shift-(int)((m_translate-m_translatebuffer)/m_shift));
+				if(m_movingleft){
+					if(i*m_shift >= m_currentrecord + 0.01 && i*m_shift <= m_currentrecord + (m_shift-0.039)){
+						glTranslatef(0,0,m_albumheight-m_albumheight*(i*m_shift-m_currentrecord)/m_shift);
+						glRotatef(temp_rotation + 90,0,1,0); //+90
+					}
+					else if(i*m_shift >= m_currentrecord - (m_shift-0.039) && i*m_shift <= m_currentrecord - 0.01){
+						glTranslatef(0,0,m_albumheight-m_albumheight*(m_currentrecord-i*m_shift)/m_shift);
+						glRotatef(temp_rotation,0,1,0);
+					}
+					else glRotatef(90,0,1,0);
+				}
+				else if(m_movingright){
+					if(i*m_shift >= m_currentrecord + 0.01 && i*m_shift <= m_currentrecord + (m_shift-0.039)){
+						glTranslatef(0,0,m_albumheight-m_albumheight*(i*m_shift-m_currentrecord)/m_shift);
+						glRotatef(180,0,1,0);
+						glRotatef(temp_rotation,0,1,0);
+					}
+					else if(i*m_shift >= m_currentrecord - (m_shift-0.039) && i*m_shift <= m_currentrecord - 0.01){
+						glTranslatef(0,0,m_albumheight-m_albumheight*(m_currentrecord-i*m_shift)/m_shift);
+						glRotatef(temp_rotation + 90,0,1,0);
+					}
+					else glRotatef(90,0,1,0);
+				}
+				else glRotatef(90,0,1,0);
+			}
+			else glTranslatef(0,0,m_albumheight);
 			glBindTexture(GL_TEXTURE_2D, records[i].texId);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-			/* Handles the case in which the square to be created
-			 * will be to the left of the center square
-			 * */
-			if(i <= (float)m_numrecords/2 - m_translatebuffer){
-				/* Slightly different coordinates for textures from
-				 * .mp3 files and textures from .ppm files
-				 * */
+			//if(i <= (float)m_numrecords/2 - m_translatebuffer){
+			if(i*m_shift <= m_currentrecord + 0.01){
 				if(m_frommp3){
 					glBegin(GL_QUADS);
 						glTexCoord2f(1, 0);	glVertex3f(1,-1,0);
@@ -308,9 +325,6 @@ void SquaresWidget::paintGL(){
 					glEnd();
 				}
 			}
-			/* Handles the case in which the square to be created
-			 * will be to the right of the center square
-			 * */
 			else{
 				if(m_frommp3){
 					glBegin(GL_QUADS);

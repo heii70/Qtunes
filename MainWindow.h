@@ -6,6 +6,7 @@
 //
 // Written by: George Wolberg, 2015
 // ======================================================================
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 #include "qmediaplayer.h"
@@ -85,15 +86,22 @@ private:
 
 	// widgets
 	QWidget *m_mainWidget;
-	QWidget *m_songSplitter;
+
+    QWidget *m_tableSplitter;
+    QWidget *m_playlistSplitter;
+    QWidget *m_mergeSplitter;
+
 	QVBoxLayout *m_mainBox;
-	
-	QWidget *m_popup;
-	
+
+    QSplitter *m_leftSplit;
 	QSplitter	*m_rightSplit;
+    QSplitter *m_mergeSplit;
 	//QLabel		*m_labelSide[2];
 	QLabel		*m_label[3];
 	QListWidget 	*m_panel[3];
+    QTableWidget *m_playlistTable;
+    QListWidget *m_checkboxList;
+    QCheckBox* m_checkbox;
 	QTableWidget	*m_table;
 	QProgressDialog	*m_progressBar;
 	QToolButton	*m_stop;
@@ -116,10 +124,10 @@ private:
 	QHBoxLayout *m_sliderlayout; 
 	QImage m_resizedArt; 
 	QImage m_tdResizedArt;
-
+	
 	SquaresWidget *m_squares;
 	QMediaPlayer *m_mediaplayer;
-	
+    QMediaPlaylist *m_playlist;
 	QList <QImage> *m_artlist;
 
 	// string lists

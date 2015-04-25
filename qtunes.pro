@@ -15,5 +15,5 @@ TEMPLATE = app
 TARGET = qtunes
 
 # Input
-HEADERS += MainWindow.h squareswidget.h
-SOURCES += main.cpp MainWindow.cpp squareswidget.cpp
+HEADERS += MainWindow.h squareswidget.h visualizer.h
+SOURCES += main.cpp MainWindow.cpp squareswidget.cpp visualizer.cpp

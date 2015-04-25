@@ -23,6 +23,7 @@
 #include <stdio.h> 
 #include <QToolButton>
 #include "squareswidget.h"
+#include "visualizer.h"
 #include <tbytevector.h>
 #include <id3v2tag.h>
 #include <mpegfile.h>
@@ -83,8 +84,9 @@ MainWindow::MainWindow	(QString program)
 	connect(m_loadart, SIGNAL(clicked()), m_squares, SLOT(s_loadart()));
 	connect(m_mediaplayer, SIGNAL(positionChanged(qint64)), this, SLOT(s_setPosition(qint64))); 
 	connect(m_mediaplayer, SIGNAL(positionChanged(qint64)), this, SLOT(s_updateLabel(qint64))); 
-	connect(m_timeSlider, SIGNAL(sliderMoved(int)), this, SLOT(s_seek(int))); 
+    connect(m_timeSlider, SIGNAL(sliderMoved(int)), this, SLOT(s_seek(int)));
 	connect(this, SIGNAL(s_artLoaded(QList<QImage>*)), m_squares,SLOT(s_mp3art(QList<QImage>*)));
+    connect(m_showvisualizer, SIGNAL(clicked()), this, SLOT(s_vwindow()));
 }
 
 
@@ -247,6 +249,9 @@ MainWindow::createLayouts()
 	
 	m_loadart = new QToolButton;
 	m_loadart->setIcon(style()->standardIcon(QStyle::SP_DirIcon));
+
+    m_showvisualizer = new QToolButton;
+    m_showvisualizer->setIcon(style()->standardIcon(QStyle::SP_ComputerIcon));
 	
 	//m_resizedArt = new QImage;
 	m_imagelabel = new QLabel; 
@@ -267,6 +272,7 @@ MainWindow::createLayouts()
 	m_buttonlayout ->addWidget(m_albumleft);
 	m_buttonlayout ->addWidget(m_volumeSlider);
 	m_buttonlayout ->addWidget(m_loadart);
+    m_buttonlayout ->addWidget(m_showvisualizer);
 	m_buttonlayout ->addWidget(m_prevsong);
 	m_buttonlayout ->addWidget(m_stop);
 	m_buttonlayout ->addWidget(m_play);
@@ -717,6 +723,16 @@ void MainWindow::s_updateLabel(qint64 Time){
     timeLabel.append(endTime);
     timeLabel.append("</b>");
     m_timeLabel->setText(timeLabel);
+}
+
+void MainWindow::s_vwindow(){
+    m_visualizer = new VisualizerWidget;
+    m_visualpopup = new QWidget();
+    m_visualpopup->setWindowFlags(Qt::Window);
+    QHBoxLayout *templayout = new QHBoxLayout;
+    templayout->addWidget(m_visualizer);
+    m_visualpopup->setLayout(templayout);
+    m_visualpopup->show();
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

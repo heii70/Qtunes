@@ -23,7 +23,6 @@
 #include <stdio.h> 
 #include <QToolButton>
 #include "squareswidget.h"
-#include "visualizer.h"
 #include <tbytevector.h>
 #include <id3v2tag.h>
 #include <mpegfile.h>
@@ -32,9 +31,9 @@
 #include <attachedpictureframe.h>
 
 using namespace std;
-using namespace TagLib; 
+using namespace TagLib;
 
-enum {TITLE, TRACK, TIME, ARTIST, ALBUM, GENRE, PATH};
+enum {TITLE, TRACK, TIME, ARTIST, ALBUM, GENRE, PATH, ALBUMID};
 const int COLS = PATH;
 
 bool caseInsensitive(const QString &s1, const QString &s2)
@@ -84,9 +83,8 @@ MainWindow::MainWindow	(QString program)
 	connect(m_loadart, SIGNAL(clicked()), m_squares, SLOT(s_loadart()));
 	connect(m_mediaplayer, SIGNAL(positionChanged(qint64)), this, SLOT(s_setPosition(qint64))); 
 	connect(m_mediaplayer, SIGNAL(positionChanged(qint64)), this, SLOT(s_updateLabel(qint64))); 
-    connect(m_timeSlider, SIGNAL(sliderMoved(int)), this, SLOT(s_seek(int)));
+	connect(m_timeSlider, SIGNAL(sliderMoved(int)), this, SLOT(s_seek(int))); 
 	connect(this, SIGNAL(s_artLoaded(QList<QImage>*)), m_squares,SLOT(s_mp3art(QList<QImage>*)));
-    connect(m_showvisualizer, SIGNAL(clicked()), this, SLOT(s_vwindow()));
 }
 
 
@@ -151,16 +149,16 @@ MainWindow::createWidgets()
 {
 	m_mainWidget = new QWidget;
 	m_mainBox = new QVBoxLayout;
-	m_songSplitter = new QWidget;
+    //m_songSplitter = new QWidget;
 	m_popup = new QWidget();
-	m_popup->setWindowFlags(Qt::Window);
+    m_popup->setWindowFlags(Qt::Window);
 	
 	m_squares = new SquaresWidget;
 	// initialize splitters
 	//m_mainSplit  = new QSplitter(this);
 	//m_leftSplit  = new QSplitter(Qt::Vertical, m_mainSplit);
-	m_rightSplit = new QSplitter(Qt::Vertical, m_songSplitter);
-	m_songSplitter->setMinimumSize(830,10);
+    //m_rightSplit = new QSplitter(Qt::Vertical, m_songSplitter);
+    //m_songSplitter->setMinimumSize(830,10);
 
 	// init labels on left side of main splitter
 	/*for(int i=0; i<2; i++) {
@@ -206,6 +204,8 @@ MainWindow::createWidgets()
 		this,		  SLOT(s_panel3   (QListWidgetItem*)));
         connect(m_table,	SIGNAL(itemDoubleClicked(QTableWidgetItem*)),
 		this,		  SLOT(s_play	  (QTableWidgetItem*)));
+
+    m_visualizer = new VisualizerWidget;
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -249,9 +249,6 @@ MainWindow::createLayouts()
 	
 	m_loadart = new QToolButton;
 	m_loadart->setIcon(style()->standardIcon(QStyle::SP_DirIcon));
-
-    m_showvisualizer = new QToolButton;
-    m_showvisualizer->setIcon(style()->standardIcon(QStyle::SP_ComputerIcon));
 	
 	//m_resizedArt = new QImage;
 	m_imagelabel = new QLabel; 
@@ -272,7 +269,6 @@ MainWindow::createLayouts()
 	m_buttonlayout ->addWidget(m_albumleft);
 	m_buttonlayout ->addWidget(m_volumeSlider);
 	m_buttonlayout ->addWidget(m_loadart);
-    m_buttonlayout ->addWidget(m_showvisualizer);
 	m_buttonlayout ->addWidget(m_prevsong);
 	m_buttonlayout ->addWidget(m_stop);
 	m_buttonlayout ->addWidget(m_play);
@@ -281,7 +277,7 @@ MainWindow::createLayouts()
 	m_buttonlayout ->addWidget(m_timeLabel); 
 	m_buttonlayout ->addWidget(m_albumright);
 	buttonwidget ->setLayout(m_buttonlayout);
-	buttonwidget ->setMaximumHeight(50);
+    buttonwidget ->setMaximumHeight(50);
 	buttonwidget ->setMaximumWidth(500);
     m_timeSlider->setMinimumWidth(380);
     m_timeSlider->setStyleSheet("QSlider::groove:horizontal  {border: 4px solid #999999;"
@@ -295,33 +291,61 @@ MainWindow::createLayouts()
                                 "border: 1px solid #999999}"
                                 "QSlider::sub-page:horizontal  {background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #66FF33, stop:1 #009933);}");
 	
-	widget->setMaximumHeight(180);
+    widget->setMaximumHeight(m_squares->height()*1.25);
 	m_imagelabel ->setMaximumWidth(500);
     m_imagelabel ->setMaximumHeight(500);
-	m_rightSplit->addWidget(widget);
-	m_table->setMaximumHeight(210);
-	m_rightSplit->addWidget(m_table);
-	m_mainBox-> addWidget(m_squares);
-	m_mainBox-> setAlignment(m_squares, Qt::AlignHCenter);
-	m_mainBox-> addWidget(buttonwidget);
+
+    m_tabs = new QTabWidget;
+    m_tabs->setMaximumHeight(m_squares->height()*1.25);
+    m_tabs->setMovable(true);
+    //const QString temp_label = QString("COVERFLOW");
+    //m_squares->setLayout()
+    QWidget *squares_widget = new QWidget();
+    QVBoxLayout *tabs_layout = new QVBoxLayout(squares_widget);
+    tabs_layout->addWidget(m_squares);
+    tabs_layout->setAlignment(m_squares,Qt::AlignHCenter);
+
+    QWidget *vis_widget = new QWidget();
+    QVBoxLayout *vis_layout = new QVBoxLayout(vis_widget);
+    vis_layout->addWidget(m_visualizer);
+    vis_layout->setAlignment(m_visualizer,Qt::AlignHCenter);
+
+
+    m_tabs->insertTab(0,squares_widget,"COVERFLOW");
+    m_tabs->insertTab(1,widget,"FILTERS");
+    m_tabs->insertTab(2,vis_widget,"VISUALIZER");
+
+    //m_rightSplit->addWidget(widget);
+    m_table->setMaximumHeight(400);
+    //m_rightSplit->addWidget(m_table);
+
+    //tabs_layout->QWidget::setAlignment(Qt::AlignHCenter);
+    //m_mainBox-> addWidget(m_squares);
+    //m_mainBox-> setAlignment(m_squares, Qt::AlignHCenter);
+    m_mainBox-> addWidget(m_tabs);
+    m_mainBox-> addWidget(buttonwidget);
 	m_mainBox-> setAlignment(buttonwidget, Qt::AlignHCenter);
     m_mainBox-> addWidget(m_timeSlider);
     m_mainBox-> setAlignment(m_timeSlider, Qt::AlignHCenter);
     /*m_mainBox-> addWidget(m_imagelabel);
     m_mainBox-> setAlignment(m_imagelabel, Qt::AlignHCenter);*/
-	m_songSplitter->resize(830,300);
+    //m_songSplitter->resize(830,300);
 	//m_songSplitter->setSizePolicy(QSizePolicy::Expanding);
-	m_mainBox-> setAlignment(buttonwidget, Qt::AlignHCenter);
+    //m_mainBox-> setAlignment(buttonwidget, Qt::AlignHCenter);
 	
-	QHBoxLayout *temp_popup = new QHBoxLayout;
-	temp_popup->addWidget(m_imagelabel);
+
+    QHBoxLayout *temp_popup = new QHBoxLayout;
+    temp_popup->addWidget(m_imagelabel);
 	m_popup->setLayout(temp_popup);
 	m_popup->setMinimumSize(300,300);
 	
-	m_songSplitter->adjustSize();
-	m_mainBox-> addWidget(m_songSplitter);
-	m_mainBox-> setAlignment(m_songSplitter, Qt::AlignHCenter);
-	m_mainWidget ->setLayout(m_mainBox);
+    //m_songSplitter->adjustSize();
+    //m_mainBox-> addWidget(m_songSplitter);
+    //m_mainBox-> setAlignment(m_songSplitter, Qt::AlignHCenter);
+    //m_mainBox-> insertWidget(3,m_table,1,Qt::AlignHCenter);
+    m_mainBox->addWidget(m_table);
+    m_mainBox->setStretch(3,2);
+    m_mainWidget ->setLayout(m_mainBox);
 	
 	//setSizes(m_rightSplit,(int)(300*.30), (int)(300*.70));
 }
@@ -433,12 +457,15 @@ MainWindow::traverseDirs(QString path)
 
 	m_progressBar->setMaximum(listFiles.size());
 	
+	QString prev_album = "", current_album = "";
+	int albumcount = 0;
+	bool newart;
 	for(int i=0; i < listFiles.size(); i++) {
 		// adjust progress dialog to current settings (optional for now)
 		//....
 
 		// init list with default values: ""
-		for(int j=0; j<=COLS; j++)
+		for(int j=0; j<=COLS+1; j++)
 			list.insert(j, "N/A");
 
 		// store file pathname into 0th position in list
@@ -451,13 +478,25 @@ MainWindow::traverseDirs(QString path)
 		// creates variable source of FileRef class
 		TagLib::FileRef source(QFile::encodeName(fileInfo.filePath()).constData());
 		
+		newart = false;
 		if(!source.isNull() && source.tag()) {
 			// creates a Tag variable in order to read the tags of source
 			TagLib::Tag *tag = source.tag();
 			// if the field of tag is not an empty string, then it replaces it appropriately
 			if(tag->genre() != "") list.replace(GENRE, TStringToQString(tag->genre()));
 			if(tag->artist() != "") list.replace(ARTIST, TStringToQString(tag->artist()));
-			if(tag->album() != "") list.replace(ALBUM, TStringToQString(tag->album()));
+			if(tag->album() != ""){
+				list.replace(ALBUM, TStringToQString(tag->album()));
+				current_album = TStringToQString(tag->album());
+				if(prev_album != current_album){
+					albumcount+=1;
+					newart = true;
+				}
+				else newart = false;
+				QString tempalbum = QString("%1").arg(albumcount);
+				list.replace(ALBUMID,tempalbum);
+			}
+			prev_album = TStringToQString(tag->album());
 			if(tag->title() != "") list.replace(TITLE, TStringToQString(tag->title()));
 			// track is not stored as a string, so I convert it to a QString
 			QString temp_track = QString("%1").arg(tag->track());
@@ -478,7 +517,7 @@ MainWindow::traverseDirs(QString path)
 					temp_time = QString("%1:0%2").arg(minutes).arg(seconds);
 				else temp_time = QString("%1:%2").arg(minutes).arg(seconds);
 				list.replace(TIME, temp_time);
-			}
+			}			
 		}
 		
 
@@ -488,11 +527,13 @@ MainWindow::traverseDirs(QString path)
 		
 		/*QByteArray ba_temp = (fileInfo.filePath()).toLocal8Bit();
 		const char* t_filepath = ba_temp.constData();*/
-		TagLib::MPEG::File audioFile(QFile::encodeName(fileInfo.filePath()).constData());
-		TagLib::ID3v2::Tag *tag = audioFile.ID3v2Tag();
-		QImage coverArt = imageForTag(tag);
-		m_tdResizedArt = coverArt.scaled(250,250,Qt::KeepAspectRatio);
-		m_artlist->append(m_tdResizedArt);
+		if(newart){
+			TagLib::MPEG::File audioFile(QFile::encodeName(fileInfo.filePath()).constData());
+			TagLib::ID3v2::Tag *tag = audioFile.ID3v2Tag();
+			QImage coverArt = imageForTag(tag);
+			m_tdResizedArt = coverArt.scaled(250,250,Qt::KeepAspectRatio);
+			m_artlist->append(m_tdResizedArt);
+		}
 	}
 
 	// base case: no more subdirectories
@@ -503,10 +544,10 @@ MainWindow::traverseDirs(QString path)
 		QFileInfo fileInfo = listDirs.at(i);
 		traverseDirs( fileInfo.filePath() );
 	}
-	qDebug("Trying to emit");
+	//qDebug("Trying to emit");
 	if(listDirs.size() == 0){
 		emit s_artLoaded(m_artlist);
-		qDebug("Emitted \n size: %d",m_artlist->size());
+		//qDebug("Emitted \n size: %d",m_artlist->size());
 		return;
 	}
 	return;
@@ -519,14 +560,14 @@ MainWindow::traverseDirs(QString path)
 //
 // Set splitter sizes.
 //
-void
+/*void
 MainWindow::setSizes(QSplitter *splitter, int size1, int size2)
 {
 	QList<int> sizes;
 	sizes.append(size1);
 	sizes.append(size2);
 	splitter->setSizes(sizes);
-}
+}*/
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -725,16 +766,6 @@ void MainWindow::s_updateLabel(qint64 Time){
     m_timeLabel->setText(timeLabel);
 }
 
-void MainWindow::s_vwindow(){
-    m_visualizer = new VisualizerWidget;
-    m_visualpopup = new QWidget();
-    m_visualpopup->setWindowFlags(Qt::Window);
-    QHBoxLayout *templayout = new QHBoxLayout;
-    templayout->addWidget(m_visualizer);
-    m_visualpopup->setLayout(templayout);
-    m_visualpopup->show();
-}
-
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::taglibAlbumArt
 //
@@ -759,7 +790,6 @@ QImage MainWindow::imageForTag(TagLib::ID3v2::Tag *tag)
 
     return image;
 }
-
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::s_play:
@@ -806,7 +836,8 @@ MainWindow::s_play(QTableWidgetItem *item)
             qDebug("Trying to stop");
 			m_mediaplayer->stop();
 		}
-		else qDebug("Not stopped");
+        else qDebug("Not stopped");
+		
 		return;
 	}
 }

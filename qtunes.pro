@@ -9,11 +9,17 @@ QT += widgets
 INCLUDEPATH += -I /usr/local/include/taglib -I /opt/X11
 LIBS += -L /usr/local/lib 
 LIBS += -ltag 
+
+INCLUDEPATH += -I /usr/local/include
+LIBS += -L /usr/local/lib
+LIBS += -laudiere
 CONFIG += console
 
 TEMPLATE = app
 TARGET = qtunes
 
 # Input
-HEADERS += MainWindow.h squareswidget.h visualizer.h
-SOURCES += main.cpp MainWindow.cpp squareswidget.cpp visualizer.cpp
+HEADERS += MainWindow.h squareswidget.h \
+    visualizer.h
+SOURCES += main.cpp MainWindow.cpp squareswidget.cpp \
+    visualizer.cpp

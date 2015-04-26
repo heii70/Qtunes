@@ -22,6 +22,8 @@ protected:
 	
 private:
 	void traverseDirs(QString path);
+    void mousePressEvent(QMouseEvent *);
+
 	int readPPM(char *file, int &width, int &height,
 		unsigned char* &image);
 	float m_translate, m_translatebuffer;
@@ -33,5 +35,6 @@ private:
 	bool m_movingleft, m_movingright, m_initialcall;
 	QString m_directory;
 	QTimer *m_timer; //automatically resets itself
+    int m_xpos, m_ypos;
 };
 #endif

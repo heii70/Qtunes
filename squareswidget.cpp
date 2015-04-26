@@ -178,6 +178,17 @@ void SquaresWidget::s_mp3art(QList<QImage> *artlist){
 	glDisable(GL_TEXTURE_2D);
 }
 
+void SquaresWidget::mousePressEvent(QMouseEvent *event){
+    m_xpos = event->x();
+    m_ypos = event->y();
+    printf("mouse x = %d, y = %d\n",m_xpos,m_ypos);
+    if(m_xpos < 135) m_translate += 2*m_shift;
+    else if(m_xpos <= 256) m_translate += m_shift;
+    else if(m_xpos >= 500 && m_xpos < 620) m_translate -= m_shift;
+    else if(m_xpos >= 620 && m_xpos <= 750) m_translate -= 2*m_shift;
+
+}
+
 /*void SquaresWidget::s_jumpto(int x){
 	m_translate = 
 }*/

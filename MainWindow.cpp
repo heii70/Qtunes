@@ -80,7 +80,8 @@ MainWindow::MainWindow	(QString program)
     connect(m_volumeSlider, SIGNAL(valueChanged(int)), this, SLOT(s_setVolume(int)));
 	connect(m_albumleft, SIGNAL(clicked()), m_squares, SLOT(s_shiftleft()));
 	connect(m_albumright, SIGNAL(clicked()), m_squares, SLOT(s_shiftright()));
-	connect(m_loadart, SIGNAL(clicked()), m_squares, SLOT(s_loadart()));
+    //connect(m_loadart, SIGNAL(clicked()), m_squares, SLOT(s_loadart()));
+    connect(m_loadart, SIGNAL(clicked()), this, SLOT(s_load()));
 	connect(m_mediaplayer, SIGNAL(positionChanged(qint64)), this, SLOT(s_setPosition(qint64))); 
 	connect(m_mediaplayer, SIGNAL(positionChanged(qint64)), this, SLOT(s_updateLabel(qint64))); 
 	connect(m_timeSlider, SIGNAL(sliderMoved(int)), this, SLOT(s_seek(int))); 

@@ -14,8 +14,11 @@
 #include "squareswidget.h"
 #include <tag.h>
 #include <id3v2tag.h>
+#include <QTabWidget>
+#include "visualizer.h"
 class SquaresWidget;
 class QMediaPlayer;
+class VisualizerWidget;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///
@@ -53,13 +56,13 @@ public slots:
 	void s_playbutton();
     void s_pausebutton();
 	void s_prevsong();
-    void s_nextsong();
+	void s_nextsong();
+    void s_repeat();
+    void s_shuffle();
     void s_setVolume(int);
 	void s_setPosition(qint64);
     void s_seek(int);
     void s_updateLabel(qint64);
-    void repeat_off();
-    void shuffle_off();
 
 private:
 	void createActions();
@@ -86,23 +89,15 @@ private:
 
 	// widgets
 	QWidget *m_mainWidget;
-
-    QWidget *m_tableSplitter;
-    QWidget *m_playlistSplitter;
-    QWidget *m_mergeSplitter;
-
+    QSplitter *m_split;
 	QVBoxLayout *m_mainBox;
+	QWidget *m_popup;
 
-    QSplitter *m_leftSplit;
-	QSplitter	*m_rightSplit;
-    QSplitter *m_mergeSplit;
 	//QLabel		*m_labelSide[2];
 	QLabel		*m_label[3];
 	QListWidget 	*m_panel[3];
-    QTableWidget *m_playlistTable;
-    QListWidget *m_checkboxList;
-    QCheckBox* m_checkbox;
 	QTableWidget	*m_table;
+    QTableWidget *m_playlistTable;
 	QProgressDialog	*m_progressBar;
 	QToolButton	*m_stop;
 	QToolButton *m_play;
@@ -111,6 +106,7 @@ private:
     QToolButton *m_nextsong;
     QToolButton *m_repeat;
     QToolButton *m_shuffle;
+
 	QToolButton *m_albumleft;
 	QToolButton *m_albumright;
 	QToolButton *m_loadart;
@@ -127,7 +123,7 @@ private:
 	
 	SquaresWidget *m_squares;
 	QMediaPlayer *m_mediaplayer;
-    QMediaPlaylist *m_playlist;
+	
 	QList <QImage> *m_artlist;
 
 	// string lists
@@ -136,6 +132,9 @@ private:
 	QStringList	   m_listArtist;
 	QStringList	   m_listAlbum;
 	QList<QStringList> m_listSongs;
+
+    QTabWidget *m_tabs;
+    VisualizerWidget *m_visualizer;
 };
 
 #endif // MAINWINDOW_H

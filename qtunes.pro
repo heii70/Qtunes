@@ -8,20 +8,16 @@ QT += gui
 
 RESOURCES += Icons.qrc
 
-INCLUDEPATH += -I D:\Libraries\new_taglib
-INCLUDEPATH += -I D:\Libraries\new_taglib\include\taglib
-INCLUDEPATH += -I D:\CodeBlocks\MinGW\include\GL
-LIBS += -LD:\Libraries\new_taglib\lib
-LIBS += -LD:\Libraries\new_taglib\bin
-#INCLUDEPATH += -I C:\Qt\Tools\taglib_1.9.1\Static\include\Headers
-#INCLUDEPATH += -I C:\MinGW\include\GL
+INCLUDEPATH += -I C:\Qt\Tools\taglib_1.9.1\Dynamic
+INCLUDEPATH += -I C:\Qt\Tools\taglib_1.9.1\Dynamic\include\Headers
+INCLUDEPATH += -I C:\MinGW\i686-w64-mingw32\include\GL
+LIBS += -LC:\Qt\Tools\taglib_1.9.1\Dynamic\lib
+LIBS += -LC:\Qt\Tools\taglib_1.9.1\Dynamic\bin
 LIBS += -ltag
 CONFIG += console
-#CONFIG += staticlib
-
 TEMPLATE = app
 TARGET = qtunes
 
 # Input
-HEADERS += MainWindow.h  squareswidget.h
-SOURCES += MainWindow.cpp  squareswidget.cpp main.cpp
+HEADERS += MainWindow.h  squareswidget.h visualizer.h
+SOURCES += main.cpp MainWindow.cpp  squareswidget.cpp visualizer.cpp

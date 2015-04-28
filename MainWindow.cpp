@@ -56,7 +56,7 @@ MainWindow::MainWindow	(QString program)
 	createLayouts();	// create widget layouts
 	m_mediaplayer = new QMediaPlayer;
 	// populate the list widgets with music library data
-	initLists();		// init list widgets
+    initLists();		// init list widgets
 
 	// set main window titlebar
 	QString copyright = "Copyright (C) 2015 by George Wolberg";
@@ -70,6 +70,7 @@ MainWindow::MainWindow	(QString program)
 	setMinimumSize(400, 300);
 	resize(830, 850);
 	m_artlist = new QList<QImage>;
+    m_albumList = new QList<QString>;
 	connect(m_stop, SIGNAL(clicked()), m_mediaplayer, SLOT(stop()));
 	connect(m_play, SIGNAL(clicked()), this, SLOT(s_playbutton()));	
 	connect(m_pause, SIGNAL(clicked()), this, SLOT(s_pausebutton()));
@@ -80,12 +81,15 @@ MainWindow::MainWindow	(QString program)
     connect(m_volumeSlider, SIGNAL(valueChanged(int)), this, SLOT(s_setVolume(int)));
 	connect(m_albumleft, SIGNAL(clicked()), m_squares, SLOT(s_shiftleft()));
 	connect(m_albumright, SIGNAL(clicked()), m_squares, SLOT(s_shiftright()));
+    connect(m_unfilter,SIGNAL(clicked()),this,SLOT(s_unfilter()));
     //connect(m_loadart, SIGNAL(clicked()), m_squares, SLOT(s_loadart()));
     connect(m_loadart, SIGNAL(clicked()), this, SLOT(s_load()));
 	connect(m_mediaplayer, SIGNAL(positionChanged(qint64)), this, SLOT(s_setPosition(qint64))); 
 	connect(m_mediaplayer, SIGNAL(positionChanged(qint64)), this, SLOT(s_updateLabel(qint64))); 
 	connect(m_timeSlider, SIGNAL(sliderMoved(int)), this, SLOT(s_seek(int))); 
-	connect(this, SIGNAL(s_artLoaded(QList<QImage>*)), m_squares,SLOT(s_mp3art(QList<QImage>*)));
+    connect(this, SIGNAL(s_artLoaded(QList<QImage>*, QList<QString>*)),
+            m_squares,SLOT(s_mp3art(QList<QImage>*,QList<QString>*)));
+    connect(m_squares,SIGNAL(s_albumSelected(QString)),this,SLOT(s_redrawAlbum(QString)));
 }
 
 
@@ -237,11 +241,13 @@ MainWindow::createLayouts()
 	m_prevsong = new QToolButton;
 	m_nextsong = new QToolButton;
 	m_pause = new QToolButton;
+    m_unfilter = new QToolButton;
     m_play->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
 	m_stop->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
 	m_prevsong->setIcon(style()->standardIcon(QStyle::SP_MediaSkipBackward));
 	m_nextsong->setIcon(style()->standardIcon(QStyle::SP_MediaSkipForward));
 	m_pause->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
+    m_unfilter->setIcon(style()->standardIcon(QStyle::SP_BrowserReload));
 	
 	m_albumleft = new QToolButton;
 	m_albumright = new QToolButton;
@@ -269,6 +275,7 @@ MainWindow::createLayouts()
 	//m_volumeSlider->setMaximumWidth(50);
 	m_buttonlayout ->addWidget(m_albumleft);
 	m_buttonlayout ->addWidget(m_volumeSlider);
+    m_buttonlayout ->addWidget(m_unfilter);
 	m_buttonlayout ->addWidget(m_loadart);
 	m_buttonlayout ->addWidget(m_prevsong);
 	m_buttonlayout ->addWidget(m_stop);
@@ -432,6 +439,39 @@ MainWindow::redrawLists(QListWidgetItem *listItem, int x)
 		row++;
 	}
 }
+void
+MainWindow::s_redrawAlbum(QString albumname){
+    m_table->setRowCount(0);
+
+    for(int i = 0, row = 0; i < m_listSongs.size(); i++){
+        if(m_listSongs[i][ALBUM] != albumname) continue;
+
+        m_table->insertRow(row);
+        QTableWidgetItem *item[COLS];
+        for(int j=0; j<COLS; j++) {
+            item[j] = new QTableWidgetItem;
+            item[j]->setText(m_listSongs[i][j]);
+            item[j]->setTextAlignment(Qt::AlignCenter);
+            m_table->setItem(row,j,item[j]);
+        }
+        row++;
+    }
+}
+
+void MainWindow::s_unfilter(){
+    m_table->setRowCount(0);
+    for(int i = 0, row = 0; i < m_listSongs.size(); i++){
+        m_table->insertRow(row);
+        QTableWidgetItem *item[COLS];
+        for(int j=0; j<COLS; j++) {
+            item[j] = new QTableWidgetItem;
+            item[j]->setText(m_listSongs[i][j]);
+            item[j]->setTextAlignment(Qt::AlignCenter);
+            m_table->setItem(row,j,item[j]);
+        }
+        row++;
+    }
+}
 
 
 
@@ -492,6 +532,7 @@ MainWindow::traverseDirs(QString path)
 				if(prev_album != current_album){
 					albumcount+=1;
 					newart = true;
+                    m_albumList->append(TStringToQString(tag->album()));
 				}
 				else newart = false;
 				QString tempalbum = QString("%1").arg(albumcount);
@@ -547,7 +588,7 @@ MainWindow::traverseDirs(QString path)
 	}
 	//qDebug("Trying to emit");
 	if(listDirs.size() == 0){
-		emit s_artLoaded(m_artlist);
+        emit s_artLoaded(m_artlist,m_albumList);
 		//qDebug("Emitted \n size: %d",m_artlist->size());
 		return;
 	}

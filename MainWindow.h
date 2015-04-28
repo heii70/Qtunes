@@ -42,7 +42,7 @@ public:
 	//! Destructor.
 	~MainWindow();
 signals:
-	void s_artLoaded(QList<QImage> *);
+    void s_artLoaded(QList<QImage> *, QList<QString> *);
 
 public slots:
 	// slots
@@ -61,6 +61,8 @@ public slots:
 	void s_setPosition(qint64);
     void s_seek(int);
     void s_updateLabel(qint64);
+    void s_redrawAlbum(QString);
+    void s_unfilter();
 
 private:
 	void createActions();
@@ -72,6 +74,7 @@ private:
 	void createLayouts();
 	void initLists	  ();
 	void redrawLists  (QListWidgetItem *, int);
+    void redrawLists  (QList<QString> *, int);
 	void traverseDirs (QString);
 	void setSizes	  (QSplitter *, int, int);
 	QImage imageForTag(TagLib::ID3v2::Tag *tag);
@@ -107,6 +110,7 @@ private:
 	QToolButton *m_albumright;
 	QToolButton *m_loadart;
 	QToolButton *m_showimage;
+    QToolButton *m_unfilter;
 	
     QSlider *m_volumeSlider;
 	QSlider *m_timeSlider;
@@ -121,6 +125,7 @@ private:
 	QMediaPlayer *m_mediaplayer;
 	
 	QList <QImage> *m_artlist;
+    QList <QString> *m_albumList;
 
 	// string lists
 	QString		   m_directory;

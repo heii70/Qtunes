@@ -9,10 +9,12 @@ class SquaresWidget : public QOpenGLWidget
 public:
 	SquaresWidget();
 	~SquaresWidget();
+signals:
+    void s_albumSelected(QString);
 public slots:
 	void s_shiftleft();
 	void s_shiftright();
-	void s_mp3art(QList<QImage> *);
+    void s_mp3art(QList<QImage> *, QList<QString> *);
 protected:
 	void initializeGL();
 	void resizeGL(int w, int h);
@@ -20,6 +22,7 @@ protected:
 	
 private:
     void mousePressEvent(QMouseEvent *);
+    void mouseDoubleClickEvent(QMouseEvent* event);
     void default_image();
 
 	float m_translate, m_translatebuffer;
@@ -33,5 +36,8 @@ private:
 	QTimer *m_timer; //automatically resets itself
     int m_xpos, m_ypos;
     int m_albums_shown, m_main_album;
+
+    QList<QString> *m_albumList;
+    bool m_doubleClicked;
 };
 #endif

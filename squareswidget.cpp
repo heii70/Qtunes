@@ -46,6 +46,7 @@ SquaresWidget::SquaresWidget(){
 	m_initialcall = true;
     m_albums_shown = 0;
     m_main_album = 0;
+    m_doubleClicked = false;
 	
 	m_timer = new QTimer(this);
 	m_timer->start(16);
@@ -94,8 +95,9 @@ void SquaresWidget::s_shiftright(){
  * to it by MainWindow's traverseDirs function and sets up the array
  * of records to have elements with OpenGL textures from the QImages
  * */
-void SquaresWidget::s_mp3art(QList<QImage> *artlist){
-	qDebug("s_mp3art");
+void SquaresWidget::s_mp3art(QList<QImage> *artlist, QList<QString> *albumlist){
+    //qDebug("s_mp3art");
+    m_albumList = albumlist;
 	m_frommp3 = true;
 	//if(artlist.size()>0){
 		m_recordsloaded = true;
@@ -135,7 +137,7 @@ void SquaresWidget::mousePressEvent(QMouseEvent *event){
     else if(m_xpos <= 256) m_translate += m_shift;
     else if(m_xpos >= 500 && m_xpos < 620) m_translate -= m_shift;
     else if(m_xpos >= 620 && m_xpos <= 750) m_translate -= 2*m_shift;*/
-    if(m_xpos < 135){
+    if(m_xpos < 135){ //ratios
         s_shiftleft();
         s_shiftleft();
     }
@@ -145,6 +147,10 @@ void SquaresWidget::mousePressEvent(QMouseEvent *event){
         s_shiftright();
         s_shiftright();
     }
+}
+
+void SquaresWidget::mouseDoubleClickEvent(QMouseEvent *event){
+    if(event->x() > 256 && event->x() < 500) m_doubleClicked = true;
 }
 
 /*void SquaresWidget::s_jumpto(int x){
@@ -224,7 +230,7 @@ void SquaresWidget::paintGL(){
     printf("m_translate = %f",m_translate);
 	glTranslatef(m_translatebuffer,0,0);
     if(m_numrecords == 0){
-        glTranslatef(0,0,m_albumheight/2);
+        glTranslatef(0,0,m_albumheight/2); //depth
         glEnable(GL_TEXTURE_2D);
         //glColor3f(0.8,0.8,0.7);
         glBindTexture(GL_TEXTURE_2D, def_record.texId);
@@ -283,7 +289,13 @@ void SquaresWidget::paintGL(){
 				}
 				else glRotatef(90,0,1,0);
 			}
-            else glTranslatef(0,0,m_albumheight);
+            else{
+                if(m_doubleClicked){
+                    emit s_albumSelected(m_albumList->at(i));
+                    m_doubleClicked = false;
+                }
+                glTranslatef(0,0,m_albumheight);
+            }
 			glBindTexture(GL_TEXTURE_2D, records[i].texId);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			//if(i <= (float)m_numrecords/2 - m_translatebuffer){

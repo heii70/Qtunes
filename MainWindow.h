@@ -12,12 +12,13 @@
 #include "qmediaplayer.h"
 #include <QtWidgets>
 #include "squareswidget.h"
-#include "visualizer.h"
 #include <tag.h>
 #include <id3v2tag.h>
+#include <QTabWidget>
+#include "visualizer.h"
 class SquaresWidget;
-class VisualizerWidget;
 class QMediaPlayer;
+class VisualizerWidget;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///
@@ -40,9 +41,10 @@ public:
 
 	//! Destructor.
 	~MainWindow();
+
+    void keyPressEvent(QKeyEvent * event);
 signals:
 	void s_artLoaded(QList<QImage> *);
-
 public slots:
 	// slots
 	void s_load  ();
@@ -60,7 +62,6 @@ public slots:
 	void s_setPosition(qint64);
     void s_seek(int);
     void s_updateLabel(qint64);
-    void s_vwindow();
 
 private:
 	void createActions();
@@ -89,9 +90,8 @@ private:
 	QWidget *m_mainWidget;
 	QWidget *m_songSplitter;
 	QVBoxLayout *m_mainBox;
-	
-    QWidget *m_popup;
-    QWidget *m_visualpopup;
+
+	QWidget *m_popup;
 	
 	QSplitter	*m_rightSplit;
 	//QLabel		*m_labelSide[2];
@@ -108,7 +108,6 @@ private:
 	QToolButton *m_albumright;
 	QToolButton *m_loadart;
 	QToolButton *m_showimage;
-    QToolButton *m_showvisualizer;
 	
     QSlider *m_volumeSlider;
 	QSlider *m_timeSlider;
@@ -119,7 +118,6 @@ private:
 	QImage m_resizedArt; 
 	QImage m_tdResizedArt;
 	
-    VisualizerWidget *m_visualizer;
 	SquaresWidget *m_squares;
 	QMediaPlayer *m_mediaplayer;
 	
@@ -131,6 +129,9 @@ private:
 	QStringList	   m_listArtist;
 	QStringList	   m_listAlbum;
 	QList<QStringList> m_listSongs;
+
+    QTabWidget *m_tabs;
+    VisualizerWidget *m_visualizer;
 };
 
 #endif // MAINWINDOW_H

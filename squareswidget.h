@@ -12,18 +12,16 @@ public:
 public slots:
 	void s_shiftleft();
 	void s_shiftright();
-	void s_loadart();
 	void s_mp3art(QList<QImage> *);
-	//void s_jumpto(int);
 protected:
 	void initializeGL();
 	void resizeGL(int w, int h);
     void paintGL();
 	
 private:
-	void traverseDirs(QString path);
-	int readPPM(char *file, int &width, int &height,
-		unsigned char* &image);
+    void mousePressEvent(QMouseEvent *);
+    void default_image();
+
 	float m_translate, m_translatebuffer;
 	float m_shift;
 	bool m_recordsloaded, m_frommp3;
@@ -33,5 +31,7 @@ private:
 	bool m_movingleft, m_movingright, m_initialcall;
 	QString m_directory;
 	QTimer *m_timer; //automatically resets itself
+    int m_xpos, m_ypos;
+    int m_albums_shown, m_main_album;
 };
 #endif

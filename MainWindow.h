@@ -14,8 +14,12 @@
 #include "squareswidget.h"
 #include <tag.h>
 #include <id3v2tag.h>
+#include <QTabWidget>
+#include <QEvent>
+#include "visualizer.h"
 class SquaresWidget;
 class QMediaPlayer;
+class VisualizerWidget;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///
@@ -37,10 +41,13 @@ public:
 	MainWindow(QString);
 
 	//! Destructor.
-	~MainWindow();
+    ~MainWindow();
+
+    bool eventFilter(QObject *object, QEvent *event);
+    void keyPressEvent(QKeyEvent * event);
 signals:
 	void s_artLoaded(QList<QImage> *);
-
+    void s_visualizerSpeed(signed int);
 public slots:
 	// slots
 	void s_load  ();
@@ -58,6 +65,9 @@ public slots:
 	void s_setPosition(qint64);
     void s_seek(int);
     void s_updateLabel(qint64);
+    void s_changeSpeed();
+    void s_setDuration(qint64);
+    //void s_clickedTime(QMouseEvent*);
 
 private:
 	void createActions();
@@ -77,16 +87,23 @@ private:
 	QAction		*m_loadAction;
 	QAction		*m_quitAction;
 	QAction		*m_aboutAction;
+    QAction     *m_slowestAction;
+    QAction     *m_slowerAction;
+    QAction     *m_normalAction;
+    QAction     *m_fasterAction;
+    QAction     *m_fastestAction;
+    QActionGroup *m_playbackAction;
 
 	// menus
 	QMenu		*m_fileMenu;
 	QMenu		*m_helpMenu;
+    QMenu       *m_playbackMenu;
 
 	// widgets
 	QWidget *m_mainWidget;
 	QWidget *m_songSplitter;
 	QVBoxLayout *m_mainBox;
-	
+
 	QWidget *m_popup;
 	
 	QSplitter	*m_rightSplit;
@@ -100,13 +117,13 @@ private:
     QToolButton *m_pause;
 	QToolButton *m_prevsong;
     QToolButton *m_nextsong;
-	QToolButton *m_albumleft;
-	QToolButton *m_albumright;
+    //QToolButton *m_albumleft;
+    //QToolButton *m_albumright;
 	QToolButton *m_loadart;
 	QToolButton *m_showimage;
 	
     QSlider *m_volumeSlider;
-	QSlider *m_timeSlider;
+    QSlider *m_timeSlider;
     QLabel *m_timeLabel;
     QLabel *m_imagelabel;
 	QHBoxLayout *m_buttonlayout;
@@ -125,6 +142,9 @@ private:
 	QStringList	   m_listArtist;
 	QStringList	   m_listAlbum;
 	QList<QStringList> m_listSongs;
+
+    QTabWidget *m_tabs;
+    VisualizerWidget *m_visualizer;
 };
 
 #endif // MAINWINDOW_H

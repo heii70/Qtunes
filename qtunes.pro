@@ -6,7 +6,7 @@ QT -= core gui
 QT += multimedia opengl
 QT += widgets
 
-INCLUDEPATH += -I /usr/local/include/taglib -I /opt/X11
+INCLUDEPATH += -I /usr/local/include/taglib -I /MinGW/include/GL
 LIBS += -L /usr/local/lib 
 LIBS += -ltag 
 CONFIG += console

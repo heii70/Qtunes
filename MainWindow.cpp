@@ -11,7 +11,8 @@
 // ======================================================================
 #include <QTextStream>
 #include <QtWidgets>
-#include <QLabel> 
+#include <QLabel>
+#include <QSlider>
 #include "MainWindow.h"
 #include <fileref.h>
 #include <tag.h>
@@ -29,11 +30,12 @@
 #include <id3v2frame.h>
 #include <id3v2header.h>
 #include <attachedpictureframe.h>
+#include "visualizer.h"
 
 using namespace std;
-using namespace TagLib; 
+using namespace TagLib;
 
-enum {TITLE, TRACK, TIME, ARTIST, ALBUM, GENRE, PATH};
+enum {TITLE, TRACK, TIME, ARTIST, ALBUM, GENRE, PATH, ALBUMID};
 const int COLS = PATH;
 
 bool caseInsensitive(const QString &s1, const QString &s2)
@@ -58,18 +60,17 @@ MainWindow::MainWindow	(QString program)
 	// populate the list widgets with music library data
 	initLists();		// init list widgets
 
-	// set main window titlebar
-	QString copyright = "Copyright (C) 2015 by George Wolberg";
-	QString version	  = "Version 1.0";
-	QString title	  =  QString("%1   (%2)         %3")
-			    .arg(program).arg(version).arg(copyright);
-	setWindowTitle(title);
+    setWindowTitle("QTunes Music Player");
+    setFocusPolicy(Qt::StrongFocus);
 
+    m_normalAction->setChecked(true);
+    m_timeSlider->installEventFilter(this);
 	// set central widget and default size
 	setCentralWidget(m_mainWidget);
 	setMinimumSize(400, 300);
 	resize(830, 850);
 	m_artlist = new QList<QImage>;
+    // set up signal/slot connections
 	connect(m_stop, SIGNAL(clicked()), m_mediaplayer, SLOT(stop()));
 	connect(m_play, SIGNAL(clicked()), this, SLOT(s_playbutton()));	
 	connect(m_pause, SIGNAL(clicked()), this, SLOT(s_pausebutton()));
@@ -78,13 +79,14 @@ MainWindow::MainWindow	(QString program)
 	connect(m_mediaplayer, SIGNAL(mediaStatusChanged(QMediaPlayer::MediaStatus)),
             this, SLOT(statusChanged(QMediaPlayer::MediaStatus)));
     connect(m_volumeSlider, SIGNAL(valueChanged(int)), this, SLOT(s_setVolume(int)));
-	connect(m_albumleft, SIGNAL(clicked()), m_squares, SLOT(s_shiftleft()));
-	connect(m_albumright, SIGNAL(clicked()), m_squares, SLOT(s_shiftright()));
-	connect(m_loadart, SIGNAL(clicked()), m_squares, SLOT(s_loadart()));
+    connect(m_loadart, SIGNAL(clicked()), this, SLOT(s_load()));
 	connect(m_mediaplayer, SIGNAL(positionChanged(qint64)), this, SLOT(s_setPosition(qint64))); 
 	connect(m_mediaplayer, SIGNAL(positionChanged(qint64)), this, SLOT(s_updateLabel(qint64))); 
-	connect(m_timeSlider, SIGNAL(sliderMoved(int)), this, SLOT(s_seek(int))); 
+    connect(m_mediaplayer, SIGNAL(durationChanged(qint64)), this, SLOT(s_setDuration(qint64)));
+    connect(m_timeSlider, SIGNAL(sliderMoved(int)), this, SLOT(s_seek(int)));
 	connect(this, SIGNAL(s_artLoaded(QList<QImage>*)), m_squares,SLOT(s_mp3art(QList<QImage>*)));
+    connect(m_mediaplayer, SIGNAL(stateChanged(QMediaPlayer::State)), m_visualizer, SLOT(s_toggle(QMediaPlayer::State)));
+    connect(this, SIGNAL(s_visualizerSpeed(signed int)), m_visualizer, SLOT(s_changeSpeed(signed int)));
 }
 
 
@@ -96,8 +98,76 @@ MainWindow::MainWindow	(QString program)
 //
 MainWindow::~MainWindow() {}
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// MainWindow::eventFilter:
+//
+// Registers a left mouse click on the time slider.
+// Used to jump the slider to a new value when clicked.
+//
 
+bool MainWindow::eventFilter(QObject *object, QEvent *event){
+    //If the widget m_timeSlider is clicked, do something
+    if(object == m_timeSlider && event->type() == QEvent::MouseButtonPress){
+        //Creates a QMouseEvent in order to read the type of mouse click used
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        //If the time slider is clicked with the left button
+        if(mouseEvent->button() == Qt::LeftButton){
+            //newposition is mapped from the x-value of the mouse click within the time slider to a value from 0 to 400
+            //It represents the destination (where we want the slider handle to jump to)
+            int newposition = QStyle::sliderValueFromPosition(0,400,mouseEvent->x(),400,0);
+            //curposition is mapped from the current value of the time slider relative to its maximum value in the same range as above
+            //It represents the slider handle's current position
+            int curposition = QStyle::sliderValueFromPosition(0,400,m_timeSlider->value(),m_timeSlider->maximum(),0);
+            qDebug() << newposition << curposition;
+            //If these two values differ by a value greater than 10 (or 1/40 of the slider), the slider will jump
+            //Without this, the slider will jump even when clicking the handle, and will therefore be undraggable
+            if(abs(newposition - curposition) > 10){
+                //Turns the new position into a fraction of the slider
+                float percent = (float)newposition/400;
+                //Multiplies the fraction of the bar by its total duration to get the exact time (may be off by a fraction of a millisecond)
+                int newTime = percent*m_mediaplayer->duration();
+                //Move both the m_mediaplayer position as well as the slider position to the new position
+                s_seek(newTime);
+                m_timeSlider->setValue(newTime);
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// MainWindow::keyPressEvent:
+//
+// Registers a certain keypress within the player and performs an action.
+//
+
+void MainWindow::keyPressEvent(QKeyEvent *event){
+
+    switch(event->key()){
+    case Qt::Key_Space:
+            if(m_mediaplayer->state() == 2){
+                m_mediaplayer->play();
+                return;
+            }
+            else{
+                m_mediaplayer->pause();
+                return;
+            }
+    case Qt::Key_Left:
+        m_squares->s_shiftleft();
+        return;
+    case Qt::Key_Right:
+        m_squares->s_shiftright();
+        return;
+    case Qt::Key_Up:
+        m_volumeSlider->setValue(m_volumeSlider->value() + m_volumeSlider->pageStep());
+        return;
+    case Qt::Key_Down:
+        m_volumeSlider->setValue(m_volumeSlider->value() - m_volumeSlider->pageStep());
+        return;
+    }
+}
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::createActions:
 //
@@ -117,6 +187,39 @@ MainWindow::createActions()
 	m_aboutAction = new QAction("&About", this);
 	m_aboutAction->setShortcut(tr("Ctrl+A"));
 	connect(m_aboutAction, SIGNAL(triggered()), this, SLOT(s_about()));
+
+    // The following five QActions set the different playback speeds of the player
+
+    m_slowestAction = new QAction("Slowest (0.50x)", this);
+    m_slowestAction->setCheckable(true);
+    connect(m_slowestAction, SIGNAL(triggered()), this, SLOT(s_changeSpeed()));
+
+    m_slowerAction = new QAction("Slower (0.75x)", this);
+    m_slowerAction->setCheckable(true);
+    connect(m_slowerAction, SIGNAL(triggered()), this, SLOT(s_changeSpeed()));
+
+    m_normalAction = new QAction("Normal (1.00x)", this);
+    m_normalAction->setCheckable(true);
+    connect(m_normalAction, SIGNAL(triggered()), this, SLOT(s_changeSpeed()));
+
+    m_fasterAction = new QAction("Fast (1.25x)", this);
+    m_fasterAction->setCheckable(true);
+    connect(m_fasterAction, SIGNAL(triggered()), this, SLOT(s_changeSpeed()));
+
+    m_fastestAction = new QAction("Fastest (1.50x)", this);
+    m_fastestAction->setCheckable(true);
+    connect(m_fastestAction, SIGNAL(triggered()), this, SLOT(s_changeSpeed()));
+
+    // Adds all five actions into one QActionGroup, m_playbackAction
+    // By default, QActionGroup has an exclusivity property, allowing only one
+    // action to be checked at a time
+
+    m_playbackAction = new QActionGroup(this);
+    m_playbackAction->addAction(m_slowestAction);
+    m_playbackAction->addAction(m_slowerAction);
+    m_playbackAction->addAction(m_normalAction);
+    m_playbackAction->addAction(m_fasterAction);
+    m_playbackAction->addAction(m_fastestAction);
 }
 
 
@@ -135,6 +238,13 @@ MainWindow::createMenus()
 
 	m_helpMenu = menuBar()->addMenu("&Help");
 	m_helpMenu->addAction(m_aboutAction);
+
+    m_playbackMenu = menuBar()->addMenu("&Playback Speed");
+    m_playbackMenu->addAction(m_slowestAction);
+    m_playbackMenu->addAction(m_slowerAction);
+    m_playbackMenu->addAction(m_normalAction);
+    m_playbackMenu->addAction(m_fasterAction);
+    m_playbackMenu->addAction(m_fastestAction);
 }
 
 
@@ -149,16 +259,15 @@ MainWindow::createWidgets()
 {
 	m_mainWidget = new QWidget;
 	m_mainBox = new QVBoxLayout;
-	m_songSplitter = new QWidget;
 	m_popup = new QWidget();
-	m_popup->setWindowFlags(Qt::Window);
+    m_popup->setWindowFlags(Qt::Window);
 	
 	m_squares = new SquaresWidget;
 	// initialize splitters
 	//m_mainSplit  = new QSplitter(this);
 	//m_leftSplit  = new QSplitter(Qt::Vertical, m_mainSplit);
-	m_rightSplit = new QSplitter(Qt::Vertical, m_songSplitter);
-	m_songSplitter->setMinimumSize(830,10);
+    //m_rightSplit = new QSplitter(Qt::Vertical, m_songSplitter);
+    //m_songSplitter->setMinimumSize(830,10);
 
 	// init labels on left side of main splitter
 	/*for(int i=0; i<2; i++) {
@@ -204,6 +313,8 @@ MainWindow::createWidgets()
 		this,		  SLOT(s_panel3   (QListWidgetItem*)));
         connect(m_table,	SIGNAL(itemDoubleClicked(QTableWidgetItem*)),
 		this,		  SLOT(s_play	  (QTableWidgetItem*)));
+
+    m_visualizer = new VisualizerWidget;
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -240,10 +351,10 @@ MainWindow::createLayouts()
 	m_nextsong->setIcon(style()->standardIcon(QStyle::SP_MediaSkipForward));
 	m_pause->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
 	
-	m_albumleft = new QToolButton;
-	m_albumright = new QToolButton;
-	m_albumleft->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
-	m_albumright->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
+//	m_albumleft = new QToolButton;
+//	m_albumright = new QToolButton;
+//	m_albumleft->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
+//	m_albumright->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
 	
 	m_loadart = new QToolButton;
 	m_loadart->setIcon(style()->standardIcon(QStyle::SP_DirIcon));
@@ -264,7 +375,7 @@ MainWindow::createLayouts()
     m_timeSlider ->setParent(this);
     m_timeSlider ->setRange(0, 0);
 	//m_volumeSlider->setMaximumWidth(50);
-	m_buttonlayout ->addWidget(m_albumleft);
+    //m_buttonlayout ->addWidget(m_albumleft);
 	m_buttonlayout ->addWidget(m_volumeSlider);
 	m_buttonlayout ->addWidget(m_loadart);
 	m_buttonlayout ->addWidget(m_prevsong);
@@ -273,49 +384,77 @@ MainWindow::createLayouts()
 	m_buttonlayout ->addWidget(m_pause);
 	m_buttonlayout ->addWidget(m_nextsong);
 	m_buttonlayout ->addWidget(m_timeLabel); 
-	m_buttonlayout ->addWidget(m_albumright);
+    //m_buttonlayout ->addWidget(m_albumright);
 	buttonwidget ->setLayout(m_buttonlayout);
-	buttonwidget ->setMaximumHeight(50);
+    buttonwidget ->setMaximumHeight(50);
 	buttonwidget ->setMaximumWidth(500);
-    m_timeSlider->setMinimumWidth(380);
-    m_timeSlider->setStyleSheet("QSlider::groove:horizontal  {border: 4px solid #999999;"
-                                "background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #BABABA, stop:1 #FFFFFF);}"
-                                "QSlider::handle:horizontal  {background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #999999, stop:1 #CCCCCC);"
-                                "width: 10px;"
-                                "height: 20px;"
-                                "margin-top: -6px;"
-                                "margin-bottom: -6px;}"
-                                "QSlider::add-page:horizontal {background: white;"
-                                "border: 1px solid #999999}"
-                                "QSlider::sub-page:horizontal  {background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #66FF33, stop:1 #009933);}");
+    m_timeSlider->setMinimumWidth(400);
+    m_timeSlider->setStyleSheet("QSlider::groove:horizontal  {border: 4px solid #999999; \
+                                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #BABABA, stop:1 #FFFFFF);} \
+                                QSlider::handle:horizontal  {background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #999999, stop:1 #CCCCCC); \
+                                width: 10px; \
+                                height: 20px; \
+                                margin-top: -6px; \
+                                margin-bottom: -6px;} \
+                                QSlider::add-page:horizontal {background: white; \
+                                border: 1px solid #999999} \
+                                QSlider::sub-page:horizontal  {background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #66FF33, stop:1 #009933);}");
 	
-	widget->setMaximumHeight(180);
+    widget->setMaximumHeight(m_squares->height()*1.25);
 	m_imagelabel ->setMaximumWidth(500);
     m_imagelabel ->setMaximumHeight(500);
-	m_rightSplit->addWidget(widget);
-	m_table->setMaximumHeight(210);
-	m_rightSplit->addWidget(m_table);
-	m_mainBox-> addWidget(m_squares);
-	m_mainBox-> setAlignment(m_squares, Qt::AlignHCenter);
-	m_mainBox-> addWidget(buttonwidget);
+
+    m_tabs = new QTabWidget;
+    m_tabs->setMaximumHeight(m_squares->height()*1.25);
+    m_tabs->setMovable(true);
+    //const QString temp_label = QString("COVERFLOW");
+    //m_squares->setLayout()
+    QWidget *squares_widget = new QWidget();
+    QVBoxLayout *tabs_layout = new QVBoxLayout(squares_widget);
+    tabs_layout->addWidget(m_squares);
+    tabs_layout->setAlignment(m_squares,Qt::AlignHCenter);
+
+    QWidget *vis_widget = new QWidget();
+    QVBoxLayout *vis_layout = new QVBoxLayout(vis_widget);
+    vis_layout->addWidget(m_visualizer);
+    vis_layout->setAlignment(m_visualizer,Qt::AlignHCenter);
+
+
+    m_tabs->insertTab(0,squares_widget,"COVERFLOW");
+    m_tabs->insertTab(1,widget,"FILTERS");
+    m_tabs->insertTab(2,vis_widget,"VISUALIZER");
+
+    //m_rightSplit->addWidget(widget);
+    m_table->setMaximumHeight(400);
+    //m_rightSplit->addWidget(m_table);
+
+    //tabs_layout->QWidget::setAlignment(Qt::AlignHCenter);
+    //m_mainBox-> addWidget(m_squares);
+    //m_mainBox-> setAlignment(m_squares, Qt::AlignHCenter);
+    m_mainBox-> addWidget(m_tabs);
+    m_mainBox-> addWidget(buttonwidget);
 	m_mainBox-> setAlignment(buttonwidget, Qt::AlignHCenter);
     m_mainBox-> addWidget(m_timeSlider);
     m_mainBox-> setAlignment(m_timeSlider, Qt::AlignHCenter);
     /*m_mainBox-> addWidget(m_imagelabel);
     m_mainBox-> setAlignment(m_imagelabel, Qt::AlignHCenter);*/
-	m_songSplitter->resize(830,300);
+    //m_songSplitter->resize(830,300);
 	//m_songSplitter->setSizePolicy(QSizePolicy::Expanding);
-	m_mainBox-> setAlignment(buttonwidget, Qt::AlignHCenter);
+    //m_mainBox-> setAlignment(buttonwidget, Qt::AlignHCenter);
 	
-	QHBoxLayout *temp_popup = new QHBoxLayout;
-	temp_popup->addWidget(m_imagelabel);
+
+    QHBoxLayout *temp_popup = new QHBoxLayout;
+    temp_popup->addWidget(m_imagelabel);
 	m_popup->setLayout(temp_popup);
 	m_popup->setMinimumSize(300,300);
 	
-	m_songSplitter->adjustSize();
-	m_mainBox-> addWidget(m_songSplitter);
-	m_mainBox-> setAlignment(m_songSplitter, Qt::AlignHCenter);
-	m_mainWidget ->setLayout(m_mainBox);
+    //m_songSplitter->adjustSize();
+    //m_mainBox-> addWidget(m_songSplitter);
+    //m_mainBox-> setAlignment(m_songSplitter, Qt::AlignHCenter);
+    //m_mainBox-> insertWidget(3,m_table,1,Qt::AlignHCenter);
+    m_mainBox->addWidget(m_table);
+    m_mainBox->setStretch(3,2);
+    m_mainWidget ->setLayout(m_mainBox);
 	
 	//setSizes(m_rightSplit,(int)(300*.30), (int)(300*.70));
 }
@@ -412,7 +551,7 @@ MainWindow::redrawLists(QListWidgetItem *listItem, int x)
 void
 MainWindow::traverseDirs(QString path)
 {
-	QString		key, val;
+    QString		key, val;
 	QStringList	list;
 	// init listDirs with subdirectories of path
 	QDir dir(path);
@@ -426,32 +565,44 @@ MainWindow::traverseDirs(QString path)
 	QFileInfoList listFiles = files.entryInfoList();
 
 	m_progressBar->setMaximum(listFiles.size());
-	
+	QString prev_album = "", current_album = "";
+	int albumcount = 0;
+	bool newart;
 	for(int i=0; i < listFiles.size(); i++) {
 		// adjust progress dialog to current settings (optional for now)
 		//....
 
 		// init list with default values: ""
-		for(int j=0; j<=COLS; j++)
+		for(int j=0; j<=COLS+1; j++)
 			list.insert(j, "N/A");
 
 		// store file pathname into 0th position in list
 		QFileInfo fileInfo = listFiles.at(i);
 		list.replace(PATH, fileInfo.filePath());
-
 		// convert it from QString to Ascii and store in source
 		//set everything to unknown first
 		
 		// creates variable source of FileRef class
 		TagLib::FileRef source(QFile::encodeName(fileInfo.filePath()).constData());
-		
+		newart = false;
 		if(!source.isNull() && source.tag()) {
 			// creates a Tag variable in order to read the tags of source
 			TagLib::Tag *tag = source.tag();
 			// if the field of tag is not an empty string, then it replaces it appropriately
 			if(tag->genre() != "") list.replace(GENRE, TStringToQString(tag->genre()));
 			if(tag->artist() != "") list.replace(ARTIST, TStringToQString(tag->artist()));
-			if(tag->album() != "") list.replace(ALBUM, TStringToQString(tag->album()));
+			if(tag->album() != ""){
+				list.replace(ALBUM, TStringToQString(tag->album()));
+				current_album = TStringToQString(tag->album());
+				if(prev_album != current_album){
+					albumcount+=1;
+					newart = true;
+				}
+				else newart = false;
+				QString tempalbum = QString("%1").arg(albumcount);
+				list.replace(ALBUMID,tempalbum);
+			}
+			prev_album = TStringToQString(tag->album());
 			if(tag->title() != "") list.replace(TITLE, TStringToQString(tag->title()));
 			// track is not stored as a string, so I convert it to a QString
 			QString temp_track = QString("%1").arg(tag->track());
@@ -472,23 +623,21 @@ MainWindow::traverseDirs(QString path)
 					temp_time = QString("%1:0%2").arg(minutes).arg(seconds);
 				else temp_time = QString("%1:%2").arg(minutes).arg(seconds);
 				list.replace(TIME, temp_time);
-			}
+			}			
 		}
-		
 
 		// append list (song data) into songlist m_listSongs;
 		// uninitialized fields are empty strings
 		m_listSongs << list;
-		
-		/*QByteArray ba_temp = (fileInfo.filePath()).toLocal8Bit();
-		const char* t_filepath = ba_temp.constData();*/
-		TagLib::MPEG::File audioFile(QFile::encodeName(fileInfo.filePath()).constData());
-		TagLib::ID3v2::Tag *tag = audioFile.ID3v2Tag();
-		QImage coverArt = imageForTag(tag);
-		m_tdResizedArt = coverArt.scaled(250,250,Qt::KeepAspectRatio);
-		m_artlist->append(m_tdResizedArt);
+		if(newart){
+            //This causes issues on windows machines.
+            TagLib::MPEG::File audioFile((QFile::encodeName(fileInfo.filePath()).constData()));;
+            TagLib::ID3v2::Tag *tag = audioFile.ID3v2Tag();
+			QImage coverArt = imageForTag(tag);
+			m_tdResizedArt = coverArt.scaled(250,250,Qt::KeepAspectRatio);
+			m_artlist->append(m_tdResizedArt);
+		}
 	}
-
 	// base case: no more subdirectories
 	//if(listDirs.size() == 0) return;
 	
@@ -497,31 +646,13 @@ MainWindow::traverseDirs(QString path)
 		QFileInfo fileInfo = listDirs.at(i);
 		traverseDirs( fileInfo.filePath() );
 	}
-	qDebug("Trying to emit");
+	//qDebug("Trying to emit");
 	if(listDirs.size() == 0){
 		emit s_artLoaded(m_artlist);
-		qDebug("Emitted \n size: %d",m_artlist->size());
 		return;
 	}
 	return;
 }		
-
-
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::setSizes:
-//
-// Set splitter sizes.
-//
-void
-MainWindow::setSizes(QSplitter *splitter, int size1, int size2)
-{
-	QList<int> sizes;
-	sizes.append(size1);
-	sizes.append(size2);
-	splitter->setSizes(sizes);
-}
-
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::s_load:
@@ -645,23 +776,29 @@ MainWindow::s_panel3(QListWidgetItem *item)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::s_about:
 //
-// Slot function for Help|About
+// Slot functions for program.
 //
 void
 MainWindow::s_about()
 {
-	QMessageBox::about(this, "About qTunes",
-			"<center> qTunes 1.0 </center> \
-			 <center> by George Wolberg, 2015 </center>");
+    QMessageBox::about(this, "About QTunes",
+            "<center><font size = 18><font color = red><b> QTunes Music Player - Spring 2015 </b></font></center> \
+             <center> Skeleton code provided by George Wolberg </center> \
+             <center> Coverflow, populating song table, and general TagLib code by Matthew Liu </center> \
+             <center> Playlist, filters, and toolbar buttons by William Gao </center> \
+             <center> Visualizer, time/volume slider, playback speed, and tag to qimage code by Kenichi Yamamoto </center>");
 }
 
 void MainWindow::s_playbutton(){
+    //Play the currently selected item
 	s_play(m_table->currentItem());
 }
 void MainWindow::s_prevsong()
 {
+    //If there is no current item, don't do anything
     if(m_table->currentItem() == NULL)
         return;
+    //There is an item, so select the previous row and play the song
     QTableWidgetItem *temp = m_table->currentItem();
     if(temp->row() == 0)
         temp = m_table->item(m_table->rowCount()-1,0);
@@ -670,8 +807,10 @@ void MainWindow::s_prevsong()
     s_play(m_table->currentItem());
 }
 void MainWindow::s_nextsong(){
+    //If there is no current item, don't do anything
     if(m_table->currentItem() == NULL)
         return;
+    //There is an item, so select the next row and play the song
 	QTableWidgetItem *temp = m_table->currentItem();
 	if(temp->row() == m_table->rowCount()-1)
 		temp = m_table->item(0,0);
@@ -681,42 +820,87 @@ void MainWindow::s_nextsong(){
 }
 
 void MainWindow::s_pausebutton(){
+    //Pauses the song
     m_mediaplayer->pause();
 }
 
 void MainWindow::s_setVolume(int Volume){
+    //Sets the volume
     m_mediaplayer->setVolume(Volume);
 }
 
 void MainWindow::s_setPosition(qint64 Position){
+    //Sets the value of the slider to match the position of the currently playing song
     m_timeSlider->setValue(Position);
 }
 
 void MainWindow::s_seek(int newPosition){
+    //Seeks to a new position in the song specified by newPosition
     qint64 position = (qint64)newPosition;
     m_mediaplayer->setPosition(position);
 }
 
 void MainWindow::s_updateLabel(qint64 Time){
+    //Get the end time of the currently playing song in minutes and seconds
     int endSecond = ((int)m_mediaplayer->duration() / 1000)%60;
     int endMinute = ((int)m_mediaplayer->duration() / 1000)/60;
     QString endTime;
+    //If the seconds are less than ten, puts a zero in the tens place
     if(endSecond < 10)
         endTime = QString("%1:0%2").arg(endMinute).arg(endSecond);
     else endTime = QString("%1:%2").arg(endMinute).arg(endSecond);
 
+    //Get the current time of the currently playing song in minutes and seconds
     int currentSecond = ((int)m_mediaplayer->position() / 1000)%60;
     int currentMinute = ((int)m_mediaplayer->position() / 1000)/60;
     QString currentTime;
+    //Same as above
     if(currentSecond < 10)
         currentTime = QString("%1:0%2").arg(currentMinute).arg(currentSecond);
     else currentTime = QString("%1:%2").arg(currentMinute).arg(currentSecond);
+
+    //Creates a label to display the current time of the song.
     QString timeLabel = " / ";
+    //Adds the current time (as a QString) to the position before the "/", and bolds it
     timeLabel.prepend(currentTime);
     timeLabel.prepend("<b>");
+    //Adds the end time (as a QString) to the position after the "/" and closes the bold tag
     timeLabel.append(endTime);
     timeLabel.append("</b>");
+    //Sets the time label
     m_timeLabel->setText(timeLabel);
+}
+
+void MainWindow::s_changeSpeed(){
+    //Checks to see which of the playback speed actions is checked and sets the speed.
+    //Since they all belong to QActionGroup, only one option can be selected at a time.
+    if(m_slowestAction->isChecked()){
+        m_mediaplayer->setPlaybackRate(0.50);
+        emit s_visualizerSpeed(-2);
+    }
+    if(m_slowerAction->isChecked()){
+        m_mediaplayer->setPlaybackRate(0.75);
+        emit s_visualizerSpeed(-1);
+    }
+    if(m_normalAction->isChecked()){
+        m_mediaplayer->setPlaybackRate(1.00);
+        emit s_visualizerSpeed(0);
+    }
+    if(m_fasterAction->isChecked()){
+        m_mediaplayer->setPlaybackRate(1.25);
+        emit s_visualizerSpeed(1);
+    }
+    if(m_fastestAction->isChecked()){
+        m_mediaplayer->setPlaybackRate(1.50);
+        emit s_visualizerSpeed(2);
+    }
+    return;
+}
+
+void MainWindow::s_setDuration(qint64 Duration){
+    //Sets the duration of the time slider
+    m_timeSlider->setRange(0,Duration);
+    return;
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -727,41 +911,50 @@ void MainWindow::s_updateLabel(qint64 Time){
 
 QImage MainWindow::imageForTag(TagLib::ID3v2::Tag *tag)
 {
-    TagLib::ID3v2::FrameList list = tag->frameList("APIC");
-
     QImage image;
-	//if(true){
+    //Creates a framelist from the given tag using "APIC",
+    //Which stands for "attached picture"
+    const TagLib::ID3v2::FrameList list = tag->frameList("APIC");
+
+    //If the list is empty, then load a default art image from QResource
     if(list.isEmpty()){
 		qDebug("No image found");
-		image.load("/Users/matt/Desktop/csc221/qtunes/cover.png");
+        //image.load("/Users/matt/Desktop/csc221/qtunes/cover.png");
+        image.load(":/Resources/Default.png");
         return image;
 	}
+    //It isn't empty, so get the attached picture frame from the framelist
+    //front() specifies the cover art of the song
     TagLib::ID3v2::AttachedPictureFrame *frame =
         static_cast<TagLib::ID3v2::AttachedPictureFrame *>(list.front());
 
+    //Load the picture from the song's frame into the Qimage, and return it
     image.loadFromData((const uchar *) frame->picture().data(), frame->picture().size());
 
     return image;
 }
 
-
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::s_play:
 //
 // Slot function to play an mp3 song.
-// This uses audiere. Replace with functions from Qt5 multimedia module
+// This uses TagLib as well as Qt5's Multimedia module.
 //
 
 void
 MainWindow::s_play(QTableWidgetItem *item)
 {
+    // If the item is empty, just return
     if(item == NULL)
         return;
+    // If the song was paused, resume it
     if(m_mediaplayer->state() == 2){
         qDebug("Resuming from paused state \n");
+        //if(m_table->)
         m_mediaplayer->play();
         return;
     }
+    //Select the currently highlighted item in the table
 	item = m_table->item(item->row(),0);
 	QTextStream out(stdout);
 	out << QString("s_play1\n");
@@ -770,41 +963,45 @@ MainWindow::s_play(QTableWidgetItem *item)
 		if(m_listSongs[i][TITLE] != item->text()) continue;
 		QString temp_title = QString("%1").arg(m_listSongs[i][PATH]);
 		m_mediaplayer->setMedia(QUrl::fromLocalFile(temp_title));
-        //m_mediaplayer->setVolume(100);
+        //Play the song
 		m_mediaplayer->play();
-        // The following two lines turns temp_title from a QString to a const char* in order
-                // to input the path into TagLib;:MPEG::File
-		m_popup->show();
+        m_popup->show();
 
+        // The following two lines turns temp_title from a QString to a const char* in order
+        // to input the path into TagLib;:MPEG::File
         QByteArray ba_temp = temp_title.toLocal8Bit();
         const char* filepath = ba_temp.data();
         TagLib::MPEG::File audioFile(filepath); //Creates a MPEG file from filepath
         TagLib::ID3v2::Tag *tag = audioFile.ID3v2Tag(true); //Creates ID3v2 *Tag to be used in following function
         QImage coverArt = imageForTag(tag);
 		
+        //Resizes coverArt to a fixed size (250x250) while keeping its aspect ratio
         m_resizedArt = coverArt.scaled(250,250,Qt::KeepAspectRatio);
         m_imagelabel->setScaledContents(true);
+        //Puts the resizd image into the image label
         m_imagelabel->setPixmap(QPixmap::fromImage(m_resizedArt));
 		qDebug("Trying to play \n");
 		if(m_stop->isDown()){
             qDebug("Trying to stop");
 			m_mediaplayer->stop();
 		}
-		else qDebug("Not stopped");
+        else qDebug("Not stopped");
 		return;
 	}
 }
 void MainWindow::statusChanged(QMediaPlayer::MediaStatus status)
 {
-	m_mediaplayer->play();
+    m_mediaplayer->play();
 	if(status == QMediaPlayer::LoadedMedia){
 		qDebug("Media is loaded");
-		/*mediaplayer->setVolume(100);
-		mediaplayer->play();
-		cout << "status changed \n" ;*/
 	}
 	if(status == QMediaPlayer::BufferedMedia){
-        m_timeSlider->setRange(0,m_mediaplayer->duration());
         qDebug("Media is buffered");
+        //Sets the window title to be the in the following format:
+        //<Artist> - <Title>
+        QString QTunes = " - ";
+        QTunes.prepend(m_table->item(m_table->currentRow(),3)->text());
+        QTunes.append(m_table->item(m_table->currentRow(),0)->text());
+        setWindowTitle(QTunes);
     }
 }

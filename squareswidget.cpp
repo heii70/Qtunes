@@ -108,7 +108,7 @@ void SquaresWidget::s_mp3art(QList<QImage> *artlist){
 	//unsigned char  *texData;
 	for(int i=0; i < m_numrecords; i++) {
 		QString temp_string = QString("record %1").arg(i+1);
-		sprintf(records[i].imageFilename,"%s",temp_string.toStdString().c_str());
+        //sprintf(records[i].imageFilename,"%s",temp_string.toStdString().c_str());
 		records[i].width  = 4;
 		records[i].height = 4;
 		//readPPM(records[i].imageFilename, ww, hh, texData);
@@ -124,7 +124,7 @@ void SquaresWidget::s_mp3art(QList<QImage> *artlist){
 			    GL_UNSIGNED_BYTE, image_gl.bits());
 	}
 	glDisable(GL_TEXTURE_2D);
-    printf("number of records = %d\n", m_numrecords);
+    //printf("number of records = %d\n", m_numrecords);
 }
 
 void SquaresWidget::mousePressEvent(QMouseEvent *event){
@@ -222,7 +222,7 @@ void SquaresWidget::paintGL(){
 		}
 		else m_movingleft = false;
 	}
-    printf("m_translate = %f",m_translate);
+    //printf("m_translate = %f",m_translate);
 	glTranslatef(m_translatebuffer,0,0);
     if(m_numrecords == 0){
         glTranslatef(0,0,m_albumheight/2);
@@ -246,7 +246,7 @@ void SquaresWidget::paintGL(){
         if(m_albums_shown%2 == 0) m_currentrecord = (float)m_shift*(m_albums_shown)/2 - m_translatebuffer;//no (m_albums_shown+m_main_album)
         else m_currentrecord = (float)m_shift*(m_albums_shown)/2 - m_translatebuffer - 1;
         glTranslatef((int)-1*m_shift*(m_albums_shown/2+1),0,0);
-        printf("current record = %f\n",m_currentrecord);
+        //printf("current record = %f\n",m_currentrecord);
 
         //for(int i = m_main_album; i < m_albums_shown + m_main_album; i++){
         for(int i = 0; i < m_numrecords; i++){

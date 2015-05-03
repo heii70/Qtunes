@@ -1,0 +1,8 @@
+<RCC>
+<qresource>
+    <file>Resources/Repeat.png</file>
+    <file>Resources/Shuffle.png</file>
+    <file>Resources/Default.ico</file>
+    <file>Resources/noload.jpg</file>
+</qresource>
+</RCC>

@@ -7,24 +7,27 @@
 #include <QtWidgets>
 #include <QGLWidget>
 #include <QOpenGLWidget>
+#include <QMediaPlayer>
 
 class VisualizerWidget : public QOpenGLWidget
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
     VisualizerWidget();
     ~VisualizerWidget();
 public slots:
     void s_randomizer();
+    void s_toggle(QMediaPlayer::State state);
+    void s_changeSpeed(signed int s);
 protected:
-	void initializeGL();
-	void resizeGL(int w, int h);
+    void initializeGL();
+    void resizeGL(int w, int h);
     void paintGL();
-	
+
 private:
-    QList<int> *list;
+    //QList<float> *list;
+    float numArray[10];
     int m_width, m_height, m_scale;
-    float lowerbar;
     QTimer *m_newRandNum;
     QTimer *m_painter;
 };

@@ -15,6 +15,7 @@
 #include <tag.h>
 #include <id3v2tag.h>
 #include <QTabWidget>
+#include <QEvent>
 #include "visualizer.h"
 class SquaresWidget;
 class QMediaPlayer;
@@ -41,8 +42,11 @@ public:
 
 	//! Destructor.
 	~MainWindow();
+    bool eventFilter(QObject *, QEvent *);
+    void keyPressEvent(QKeyEvent *);
 signals:
     void s_artLoaded(QList<QImage> *, QList<QString> *);
+    void s_visualizerSpeed(signed int);
 
 public slots:
 	// slots
@@ -53,16 +57,22 @@ public slots:
 	void s_play  (QTableWidgetItem*);
 	void s_about ();
 	void statusChanged(QMediaPlayer::MediaStatus status);
-	void s_playbutton();
-    void s_pausebutton();
-	void s_prevsong();
-	void s_nextsong();
+    void s_playButton();
+    void s_pauseButton();
+    void s_prevSong();
+    void s_nextSong();
+    void s_repeat();
+    void s_shuffle();
+    void s_checkboxSelect();
     void s_setVolume(int);
 	void s_setPosition(qint64);
     void s_seek(int);
     void s_updateLabel(qint64);
+    void s_changeSpeed();
+    void s_setDuration(qint64);
+    void s_playlistUpdate();
     void s_redrawAlbum(QString);
-    void s_unfilter();
+    void s_tableUpdate();
 
 private:
 	void createActions();
@@ -84,40 +94,52 @@ private:
 	QAction		*m_quitAction;
 	QAction		*m_aboutAction;
 
+    QAction     *m_slowestAction;
+    QAction     *m_slowerAction;
+    QAction     *m_normalAction;
+    QAction     *m_fasterAction;
+    QAction     *m_fastestAction;
+    QActionGroup *m_playbackAction;
+
 	// menus
 	QMenu		*m_fileMenu;
 	QMenu		*m_helpMenu;
+    QMenu       *m_playbackMenu;
 
 	// widgets
 	QWidget *m_mainWidget;
 	QWidget *m_songSplitter;
 	QVBoxLayout *m_mainBox;
 
-	QWidget *m_popup;
+    QSplitter *m_split1;
+    QSplitter *m_split2;
+    QWidget *m_staticImage;
+    QWidget *m_musicWidgets;
 	
-	QSplitter	*m_rightSplit;
-	//QLabel		*m_labelSide[2];
 	QLabel		*m_label[3];
 	QListWidget 	*m_panel[3];
 	QTableWidget	*m_table;
+
+    QTableWidget *m_playlistTable;
+    QTableWidget *m_checkboxTable;
+    QCheckBox *m_checkbox;
 	QProgressDialog	*m_progressBar;
 	QToolButton	*m_stop;
 	QToolButton *m_play;
     QToolButton *m_pause;
-	QToolButton *m_prevsong;
-    QToolButton *m_nextsong;
-	QToolButton *m_albumleft;
-	QToolButton *m_albumright;
-	QToolButton *m_loadart;
-	QToolButton *m_showimage;
-    QToolButton *m_unfilter;
+    QToolButton *m_prevSong;
+    QToolButton *m_nextSong;
+    QToolButton *m_repeat;
+    QToolButton *m_shuffle;
+    QToolButton *m_checkboxSelect;
+    QToolButton *m_loadArt;
 	
     QSlider *m_volumeSlider;
 	QSlider *m_timeSlider;
     QLabel *m_timeLabel;
-    QLabel *m_imagelabel;
-	QHBoxLayout *m_buttonlayout;
-	QHBoxLayout *m_sliderlayout; 
+    QLabel *m_imageLabel;
+    QHBoxLayout *m_buttonLayout;
+    QHBoxLayout *m_sliderLayout;
 	QImage m_resizedArt; 
 	QImage m_tdResizedArt;
 	

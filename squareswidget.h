@@ -12,9 +12,9 @@ public:
 signals:
     void s_albumSelected(QString);
 public slots:
-	void s_shiftleft();
-	void s_shiftright();
-    void s_mp3art(QList<QImage> *, QList<QString> *);
+    void s_shiftLeft();
+    void s_shiftRight();
+    void s_MP3Art(QList<QImage> *, QList<QString> *);
 protected:
 	void initializeGL();
 	void resizeGL(int w, int h);
@@ -23,21 +23,16 @@ protected:
 private:
     void mousePressEvent(QMouseEvent *);
     void mouseDoubleClickEvent(QMouseEvent* event);
-    void default_image();
+    void defaultImage();
 
-	float m_translate, m_translatebuffer;
-	float m_shift;
-	bool m_recordsloaded, m_frommp3;
-	int m_numrecords;
-	int m_width, m_height, m_scale;
-	float m_currentrecord, m_albumheight;
-	bool m_movingleft, m_movingright, m_initialcall;
+    float m_translate, m_translateBuffer, m_shift,
+        m_centerRegion, m_albumDepth;
+    bool m_recordsLoaded, m_fromMP3, m_movingLeft,
+        m_movingRight, m_initialCall, m_doubleClicked;
+    int m_numRecords, m_width, m_height, m_scale,
+        m_xpos, m_ypos, m_albumsShown, m_mainAlbum;
 	QString m_directory;
 	QTimer *m_timer; //automatically resets itself
-    int m_xpos, m_ypos;
-    int m_albums_shown, m_main_album;
-
     QList<QString> *m_albumList;
-    bool m_doubleClicked;
 };
 #endif

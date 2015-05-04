@@ -91,6 +91,7 @@ MainWindow::MainWindow	(QString program)
         connect(m_mediaplayer, SIGNAL(durationChanged(qint64)), this, SLOT(s_setDuration(qint64)));
     connect(m_timeSlider, SIGNAL(sliderMoved(int)), this, SLOT(s_seek(int)));
     connect(m_table, SIGNAL(itemClicked(QTableWidgetItem*)), this, SLOT(playlistUpdate()));
+    connect(m_playlistTable, SIGNAL(itemClicked(QTableWidgetItem*)), this, SLOT(m_tableUpdate()));
     connect(this, SIGNAL(s_artLoaded(QList<QImage>*)), m_squares,SLOT(s_mp3art(QList<QImage>*)));
     connect(m_mediaplayer, SIGNAL(stateChanged(QMediaPlayer::State)), m_visualizer, SLOT(s_toggle(QMediaPlayer::State)));
     connect(this, SIGNAL(s_visualizerSpeed(signed int)), m_visualizer, SLOT(s_changeSpeed(signed int)));
@@ -331,6 +332,33 @@ MainWindow::createWidgets()
         m_table->setMinimumWidth(600);
         m_table->resize(600,450);
 
+        //m_checkboxTable = new QTableWidget(0,1);
+
+        /*for(int i = 0; i < m_table->rowCount(); i++) {
+              QTableWidgetItem *playlistItem = new QTableWidgetItem;
+              QCheckBox* p_checkbox = new QCheckBox;
+              QWidget* p_widget = new QWidget;
+              p_checkbox->setChecked(true);
+
+              QHBoxLayout* p_layout = new QHBoxLayout(p_widget);
+              p_layout->addWidget(p_checkbox);
+              p_layout->setAlignment(Qt::AlignCenter);
+              p_widget->setLayout(p_layout);
+
+              m_checkboxTable->setCellWidget(i,0,p_widget);
+
+              m_table->item(i,0)->setText("");
+              m_table->setCellWidget(i,0,p_widget);
+
+              m_playlistTable->insertRow(i);
+              m_playlistTable->setItem(i,0,playlistItem);
+              playlistItem->setText(m_table->item(i,1)->text());
+        }
+        m_repeat->setEnabled(true);
+        m_shuffle->setEnabled(true);
+        m_checkboxSelect->setEnabled(true);
+    }*/
+
 	// init signal/slot connections
 	connect(m_panel[0],	SIGNAL(itemClicked(QListWidgetItem*)),
 		this,		  SLOT(s_panel1   (QListWidgetItem*)));
@@ -342,7 +370,6 @@ MainWindow::createWidgets()
 		this,		  SLOT(s_play	  (QTableWidgetItem*)));
 
     m_visualizer = new VisualizerWidget;
-    m_checkboxTable = new QTableWidget;
     m_checkbox = new QCheckBox;
 }
 
@@ -581,7 +608,7 @@ MainWindow::initLists()
               p_layout->setAlignment(Qt::AlignCenter);
               p_widget->setLayout(p_layout);
 
-              m_checkboxTable->setCellWidget(i,0,p_widget);
+              //m_checkboxTable->setCellWidget(i,0,p_widget);
 
               m_table->item(i,0)->setText("");
               m_table->setCellWidget(i,0,p_widget);
@@ -606,7 +633,7 @@ void
 MainWindow::redrawLists(QListWidgetItem *listItem, int x)
 {
 	m_table->setRowCount(0);
-
+    m_playlistTable->setRowCount(0);
 	// copy data to table widget
 	for(int i=0,row=0; i<m_listSongs.size(); i++) {
 		// skip rows whose field doesn't match text
@@ -768,22 +795,6 @@ MainWindow::traverseDirs(QString path)
 }		
 
 
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::setSizes:
-//
-// Set splitter sizes.
-//
-/*void
-MainWindow::setSizes(QSplitter *splitter, int size1, int size2)
-{
-	QList<int> sizes;
-	sizes.append(size1);
-	sizes.append(size2);
-	splitter->setSizes(sizes);
-}*/
-
-
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::s_load:
 //
@@ -840,6 +851,7 @@ MainWindow::s_panel1(QListWidgetItem *item)
         m_panel[1]->clear();
         m_panel[2]->clear();
         m_table->setRowCount(0);
+        m_playlistTable->setRowCount(0);
         initLists();
                 return;
         }
@@ -1225,13 +1237,15 @@ void MainWindow::statusChanged(QMediaPlayer::MediaStatus status)
         s_play(m_table->currentItem());
     }
 
-    if(status == QMediaPlayer::EndOfMedia && m_playlistTable->currentRow() < m_playlistTable->rowCount()-1)
+    if(status == QMediaPlayer::EndOfMedia && m_playlistTable->currentRow() < m_playlistTable->rowCount())
     {
+        if(m_repeat->isChecked())
+            s_play(m_table->currentItem());
+
+        if(m_playlistTable->currentRow()+1 >= m_playlistTable->rowCount())
+            return;
+
         int i = 0;
-
-        if(m_playlistTable->currentItem() == NULL)
-            m_playlistTable->setCurrentCell(0,0);
-
         QTableWidgetItem* nextItem = new QTableWidgetItem;
         nextItem = m_playlistTable->item(m_playlistTable->currentRow()+1,0);
         while(m_table->item(i,1)->text() != nextItem->text() && i < m_table->rowCount())
@@ -1331,8 +1345,13 @@ void MainWindow::s_checkboxSelect()
         int currentPosition = m_table->currentRow();
         for(int i = 0; i < m_table->rowCount(); i++)
         {
+            QTableWidgetItem *playlistItem = new QTableWidgetItem;
             m_table->setCurrentCell(i,0);
-            playlistUpdate();
+            m_checkbox = m_table->cellWidget(i,0)->findChild<QCheckBox *>();
+            m_checkbox->setChecked(true);
+            playlistItem->setText(m_table->item(m_table->currentRow(),1)->text());
+            m_playlistTable->insertRow(i);
+            m_playlistTable->setItem(i,0,playlistItem);
         }
         m_table->setCurrentCell(currentPosition,1);
         m_repeat->setEnabled(true);
@@ -1357,27 +1376,60 @@ void MainWindow::s_checkboxSelect()
 void MainWindow::playlistUpdate()
 {
     QTableWidgetItem *playlistItem = new QTableWidgetItem;
-
-    if(m_table->currentColumn() != 0) return;
+    playlistItem->setText(m_table->item(m_table->currentRow(),1)->text());
 
     m_checkbox = m_table->cellWidget(m_table->currentRow(),0)->findChild<QCheckBox *>();
-    m_checkbox->toggle();
 
-     if(m_checkbox->isChecked() == true)
-     {
-             m_playlistTable->insertRow(m_playlistTable->rowCount());
-             m_playlistTable->setItem(m_playlistTable->rowCount()-1,0,playlistItem);
-             playlistItem->setText(m_table->item(m_table->currentRow(),1)->text());
-     }
-     else
-     {
-         for(int i = 0; i < m_playlistTable->rowCount(); i++)
+    //Set checkbox to update only if its column is clicked
+    if(m_table->currentColumn() != 0)
+    {
+        if(m_checkbox->isChecked() == false)
+            return;
+
+        if(m_playlistTable->currentItem() == NULL)
+            m_playlistTable->setCurrentCell(0,0);
+
+        if(m_repeat->isChecked())
+        {
+            m_playlistTable->currentItem()->setText(m_table->item(m_table->currentRow(),1)->text());
+            return;
+        }
+
+        int i = 0;
+        while(m_playlistTable->item(i,0)->text() != m_table->item(m_table->currentRow(),1)->text() && i < m_playlistTable->rowCount())
+            i++;
+        m_playlistTable->setCurrentCell(i,0);
+    }
+
+    else
+    {
+         m_checkbox->toggle();
+
+         if(m_checkbox->isChecked() == true)
          {
-             if(m_table->item(m_table->currentRow(),1)->text() == m_playlistTable->item(i,0)->text())
-             {
-                 m_playlistTable->removeRow(i);
-             }
+            m_playlistTable->insertRow(0);
+            m_playlistTable->setItem(0,0,playlistItem);
          }
-     }
+         else
+         {
+             for(int i = 0; i < m_playlistTable->rowCount(); i++)
+             {
+                 if(m_table->item(m_table->currentRow(),1)->text() == m_playlistTable->item(i,0)->text())
+                 {
+                     m_playlistTable->removeRow(i);
+                 }
+            }
+         }
+    }
+}
+
+void MainWindow::m_tableUpdate()
+{
+    QTableWidgetItem *m_tableItem = new QTableWidgetItem;
+    m_tableItem->setText(m_playlistTable->item(m_playlistTable->currentRow(),0)->text());
+    int i = 0;
+    while(m_table->item(i,1)->text()  != m_playlistTable->item(m_playlistTable->currentRow(),0)->text() && i < m_table->rowCount())
+        i++;
+    m_table->setCurrentCell(i,0);
 }
 

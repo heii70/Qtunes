@@ -72,6 +72,7 @@ public slots:
     void s_changeSpeed();
     void s_setDuration(qint64);
     void playlistUpdate();
+    void m_tableUpdate();
 
 private:
 	void createActions();

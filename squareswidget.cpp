@@ -45,7 +45,7 @@ SquaresWidget::SquaresWidget(){
     m_mainAlbum = 0;
 	m_timer = new QTimer(this);
 	m_timer->start(16);
-	connect(m_timer, SIGNAL(timeout()), this, SLOT(update()));
+    connect(m_timer, SIGNAL(timeout()), this, SLOT(update()));
 }
 
 /* SquaresWidget deconstructor*/
@@ -68,7 +68,7 @@ void SquaresWidget::s_shiftLeft(){
  * */
 void SquaresWidget::s_shiftRight(){
     if(m_numRecords == 0) return;
-    if(m_translate + 0.1 < -1*m_shift*(m_numRecords/2)) return;
+    if(m_translate + 0.1 < -1*m_shift*(m_numRecords/2)-1) return;
 	m_translate -= m_shift;
 }
 /* s_loadart() is a slot function that is connected to a signal
@@ -176,9 +176,12 @@ void SquaresWidget::resizeGL(int w, int h){
     glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(60, (float) w/h, 1, 1000);
-    gluLookAt(0,0, 2.8, //2.8
-				0,0,1,
-				0,1,0);
+    gluLookAt(0,-0.05, 2.95, //2.8
+                0,-0.05,1,
+                0,1,0);
+    /*gluLookAt(0,0,3.05,
+              0,0,1,
+              0,1,0);*/
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
@@ -188,10 +191,6 @@ void SquaresWidget::resizeGL(int w, int h){
  * from .mp3 files.
  * */
 
-//m_mainAlbum must be incremented or decremented within painGL (it will be
-//changed too fast within s_shiftLeft and s_shiftRight
-//WILL PROBABLY HAVE TO FIX THIS WITHIN PAINTGL
-//move translations to the end(?)
 void SquaresWidget::paintGL(){
 	// clears 2D and 3D
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -238,7 +237,7 @@ void SquaresWidget::paintGL(){
             glTranslatef(m_shift,0,0);
 
             //if the record is not within the desired range of records, continue
-            if(i < m_mainAlbum || i >= m_mainAlbum + m_albumsShown) continue;
+            if(i < m_mainAlbum || i >= m_mainAlbum + m_albumsShown + m_shift/4) continue;
 
 			glEnable(GL_TEXTURE_2D);
 			glPushMatrix();
@@ -248,14 +247,16 @@ void SquaresWidget::paintGL(){
             if(i*m_shift >= m_centerRegion + 0.01 || i*m_shift <= m_centerRegion - 0.01){
 
                 //temp_rotation will represent the desired angle of rotation
+                //the desired angle of rotation depends on how far things have been shifted
                 //m_translate-m_translatebuffer is equal to the difference between the "desired"
                 //translation of the coverflow and the actual position of the coverflow
                 //I divide it by m_shift to then figure out the position of the center album within
                 //the region where it would be rotating (from -m_shift to +m_shift)
                 //it is also subtracted by the integer version of this to ensure that the number
                 //multiplied by 90 is between 0 and 1
-                float temp_rotation = 90*((m_translate-m_translateBuffer)/m_shift-
-                                          (int)((m_translate-m_translateBuffer)/m_shift));
+                float regionMoved = ((m_translate-m_translateBuffer)/m_shift-
+                                     (int)((m_translate-m_translateBuffer)/m_shift));
+                float temp_rotation = 90*regionMoved;
                 if(m_movingLeft){
 
                     //This if statement checks to see if the position of the record being created in this
@@ -264,8 +265,7 @@ void SquaresWidget::paintGL(){
                     if(i*m_shift >= m_centerRegion + 0.01 && i*m_shift <= m_centerRegion + (m_shift-0.039)){
                         //translated in the positive z-direction based on how far the album has moved
                         //through the region where things must be rotated
-                        glTranslatef(0,0,m_albumDepth*(m_translate-m_translateBuffer)/m_shift-
-                                     (int)((m_translate-m_translateBuffer)/m_shift));
+                        glTranslatef(0,0,m_albumDepth*regionMoved);
                         glRotatef(temp_rotation + 90,0,1,0); //+90
 					}
 
@@ -273,8 +273,7 @@ void SquaresWidget::paintGL(){
                     //is in the region on the left of the center album that would need to be rotated
                     //as the coverflow is moving
                     else if(i*m_shift >= m_centerRegion - (m_shift-0.039) && i*m_shift <= m_centerRegion - 0.01){
-                        glTranslatef(0,0,m_albumDepth-m_albumDepth*(m_translate-m_translateBuffer)/m_shift+
-                                     (int)((m_translate-m_translateBuffer)/m_shift));
+                        glTranslatef(0,0,m_albumDepth-m_albumDepth*regionMoved);
 						glRotatef(temp_rotation,0,1,0);
 					}
 
@@ -284,13 +283,11 @@ void SquaresWidget::paintGL(){
 				}
                 else if(m_movingRight){
                     if(i*m_shift >= m_centerRegion + 0.01 && i*m_shift <= m_centerRegion + (m_shift-0.039)){
-                        glTranslatef(0,0,m_albumDepth-m_albumDepth*(-1)*(m_translate-m_translateBuffer)/m_shift-
-                                     (int)((m_translate-m_translateBuffer)/m_shift));
+                        glTranslatef(0,0,m_albumDepth-m_albumDepth*(-1)*regionMoved);
                         glRotatef(temp_rotation + 180,0,1,0);
 					}
                     else if(i*m_shift >= m_centerRegion - (m_shift-0.039) && i*m_shift <= m_centerRegion - 0.01){
-                        glTranslatef(0,0,m_albumDepth*(-1)*(m_translate-m_translateBuffer)/m_shift+
-                                     (int)((m_translate-m_translateBuffer)/m_shift));
+                        glTranslatef(0,0,m_albumDepth*(-1)*regionMoved);
 						glRotatef(temp_rotation + 90,0,1,0);
 					}
 					else glRotatef(90,0,1,0);
@@ -305,6 +302,7 @@ void SquaresWidget::paintGL(){
                     emit s_albumSelected(m_albumList->at(i));
                     m_doubleClicked = false;
                 }
+                emit s_currentAlbum(m_albumList->at(i));
                 glTranslatef(0,0,m_albumDepth);
             }
 			glBindTexture(GL_TEXTURE_2D, records[i].texId);
@@ -333,11 +331,11 @@ void SquaresWidget::paintGL(){
 				glVertex3f(1, 1, 0);
 				glVertex3f(1, -1, 0);
 			glEnd();
-			glPopMatrix();
-		}
+            glPopMatrix();
+        }
 	}
 	/* glFlush() is needed to essentially draw what was just written
 	 * above
 	 * */
-	glFlush();
+    glFlush();
 }

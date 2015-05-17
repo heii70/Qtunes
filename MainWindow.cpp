@@ -64,6 +64,27 @@ MainWindow::MainWindow	(QString program)
     setWindowTitle("QTunes Music Player");
     setFocusPolicy(Qt::StrongFocus);
 
+    ts_styleSheet = "QSlider::add-page:horizontal { \
+                        background: #444; \
+                        border: 1px solid #777; \
+                        height: 10px; \
+                        border-radius: 4px;} \
+                        QSlider::handle:horizontal { \
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+                        stop:0 #666, stop:1 #888); \
+                        border: 1px solid #777; \
+                        width: 13px; \
+                        margin-top: -2px; \
+                        margin-bottom: -2px; \
+                        border-radius: 4px; \
+                        } \
+                        QSlider::handle:horizontal:hover { \
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+                        stop:0 #999, stop:1 #BBB); \
+                        border: 1px solid #444; \
+                        border-radius: 4px; \
+                        }";
+
     m_normalAction->setChecked(true);
     m_timeSlider->installEventFilter(this);
 	// set central widget and default size
@@ -97,6 +118,7 @@ MainWindow::MainWindow	(QString program)
     connect(this,SIGNAL(s_visualizerSpeed(signed int)),m_visualizer,
             SLOT(s_changeSpeed(signed int)));
     connect(m_squares,SIGNAL(s_albumSelected(QString)),this,SLOT(s_redrawAlbum(QString)));
+    connect(m_squares,SIGNAL(s_currentAlbum(QString)),this,SLOT(s_albumLabel(QString)));
 }
 
 
@@ -231,6 +253,11 @@ MainWindow::createActions()
     m_playbackAction->addAction(m_fasterAction);
     m_playbackAction->addAction(m_fastestAction);
 
+    m_nightmodeAction = new QAction("Night Mode", this);
+    m_nightmodeAction->setShortcut(tr("Ctrl+N"));
+    m_nightmodeAction->setCheckable(true);
+    connect(m_nightmodeAction, SIGNAL(triggered()), this, SLOT(s_toggleNightMode()));
+
 }
 
 
@@ -256,6 +283,9 @@ MainWindow::createMenus()
     m_playbackMenu->addAction(m_normalAction);
     m_playbackMenu->addAction(m_fasterAction);
     m_playbackMenu->addAction(m_fastestAction);
+
+    m_prefMenu = menuBar()->addMenu("&Preferences");
+    m_prefMenu->addAction(m_nightmodeAction);
 }
 
 
@@ -288,6 +318,16 @@ MainWindow::createWidgets()
     m_musicWidgets->setMaximumWidth(700);
 
     m_squares = new SquaresWidget;
+    m_albumLabel = new QLabel;
+    m_albumLabel->setText("");
+    m_albumLabel->setFrameStyle(QFrame::Box | QFrame::Sunken);
+    m_albumLabel->setMaximumHeight(20);
+    m_albumLabel->setAlignment(Qt::AlignCenter);
+    m_albumLabel->setMinimumWidth(m_squares->width());
+    m_albumLabel->setMaximumWidth(m_squares->width());
+    m_albumLabel->setStyleSheet("QLabel {"
+                                "background-color : transparent;"
+                                "color : white;}");
 
 	// initialize label on right side of main splitter
 	for(int i=0; i<3; i++) {
@@ -465,9 +505,13 @@ MainWindow::createLayouts()
     m_tabs->setMaximumHeight(m_squares->height()*1.25);
     m_tabs->setMovable(true);
     QWidget *squares_widget = new QWidget();
+
     QVBoxLayout *tabs_layout = new QVBoxLayout(squares_widget);
     tabs_layout->addWidget(m_squares);
     tabs_layout->setAlignment(m_squares,Qt::AlignHCenter);
+
+    tabs_layout->addWidget(m_albumLabel);
+    tabs_layout->setAlignment(m_albumLabel,Qt::AlignHCenter);
 
     QWidget *vis_widget = new QWidget();
     QVBoxLayout *vis_layout = new QVBoxLayout(vis_widget);
@@ -675,7 +719,6 @@ MainWindow::traverseDirs(QString path)
 	files.setNameFilters(QStringList("*.mp3"));
 	QFileInfoList listFiles = files.entryInfoList();
 
-	m_progressBar->setMaximum(listFiles.size());
 	QString prev_album = "", current_album = "";
 	int albumcount = 0;
 	bool newart;
@@ -691,14 +734,16 @@ MainWindow::traverseDirs(QString path)
 		
 		// creates variable source of FileRef class
 		TagLib::FileRef source(QFile::encodeName(fileInfo.filePath()).constData());
-		
 		newart = false;
 		if(!source.isNull() && source.tag()) {
 			// creates a Tag variable in order to read the tags of source
 			TagLib::Tag *tag = source.tag();
-			// if the field of tag is not an empty string, then it replaces it appropriately
-			if(tag->genre() != "") list.replace(GENRE, TStringToQString(tag->genre()));
-			if(tag->artist() != "") list.replace(ARTIST, TStringToQString(tag->artist()));
+            // if the field of tag is not an empty string,
+            //then it replaces it appropriately
+            if(tag->genre() != "")
+                list.replace(GENRE, TStringToQString(tag->genre()));
+            if(tag->artist() != "")
+                list.replace(ARTIST, TStringToQString(tag->artist()));
 			if(tag->album() != ""){
 				list.replace(ALBUM, TStringToQString(tag->album()));
 				current_album = TStringToQString(tag->album());
@@ -712,7 +757,8 @@ MainWindow::traverseDirs(QString path)
 				list.replace(ALBUMID,tempalbum);
 			}
 			prev_album = TStringToQString(tag->album());
-			if(tag->title() != "") list.replace(TITLE, TStringToQString(tag->title()));
+            if(tag->title() != "")
+                list.replace(TITLE, TStringToQString(tag->title()));
 
             // the track tag must be converted to a QString
 			QString temp_track = QString("%1").arg(tag->track());
@@ -731,8 +777,8 @@ MainWindow::traverseDirs(QString path)
 				int minutes = prop->length()/60;
 				QString temp_time;
 
-                // the following if statement is necessary to properly display the time
-                //if the seconds is a single digit
+                // the following if statement is necessary to properly
+                //display the time if the seconds is a single digit
 				if(seconds < 10)
 					temp_time = QString("%1:0%2").arg(minutes).arg(seconds);
 				else temp_time = QString("%1:%2").arg(minutes).arg(seconds);
@@ -745,8 +791,6 @@ MainWindow::traverseDirs(QString path)
 		// uninitialized fields are empty strings
 		m_listSongs << list;
 		
-		/*QByteArray ba_temp = (fileInfo.filePath()).toLocal8Bit();
-		const char* t_filepath = ba_temp.constData();*/
 		if(newart){
 			TagLib::MPEG::File audioFile(QFile::encodeName(fileInfo.filePath()).constData());
 			TagLib::ID3v2::Tag *tag = audioFile.ID3v2Tag();
@@ -759,9 +803,8 @@ MainWindow::traverseDirs(QString path)
 	// recursively descend through all subdirectories
 	for(int i=0; i<listDirs.size(); i++) {
 		QFileInfo fileInfo = listDirs.at(i);
-		traverseDirs( fileInfo.filePath() );
+        traverseDirs(fileInfo.filePath());
 	}
-	//qDebug("Trying to emit");
 	if(listDirs.size() == 0){
         emit s_artLoaded(m_artlist,m_albumList);
 		return;
@@ -792,10 +835,10 @@ MainWindow::s_load()
 	m_directory = s;
 
 	// init progress bar
-	m_progressBar = new QProgressDialog(this);
-	m_progressBar->setWindowTitle("Updating");
-	m_progressBar->setFixedSize(300,100);
-	m_progressBar->setCancelButtonText("Cancel");
+    //m_progressBar = new QProgressDialog(this);
+    //m_progressBar->setWindowTitle("Updating");
+    //m_progressBar->setFixedSize(300,100);
+    //m_progressBar->setCancelButtonText("Cancel");
 
     m_listSongs.clear();
     m_table->setRowCount(0);
@@ -807,7 +850,7 @@ MainWindow::s_load()
     m_mediaplayer->stop();
     traverseDirs(m_directory);
 	initLists();
-	m_progressBar->close(); 
+    //m_progressBar->close();
 }
 
 
@@ -1102,12 +1145,101 @@ void MainWindow::s_setDuration(qint64 Duration){
     return;
 }
 
+void MainWindow::s_toggleNightMode(){
+    if(m_nightmodeAction->isChecked()){
+        m_tabs->setStyleSheet("background: black; \
+                          ");
+        m_volumeSlider->setStyleSheet("QSlider::groove:horizonal{background-color: #444444; \
+            height: 5px; \
+            border: 1px solid grey;} \
+            QSlider::handle:horizonal{background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+            stop:0 #555555, stop:1 #777777); \
+            border: 1px solid grey; \
+            width: 5px; \
+            margin: -5px;} \
+            QSlider::handle:horizontal:disabled { \
+            background-color: #444; \
+            border: 1px solid grey; \
+            width: 5px; \
+            border-radius: 4px;} \
+            ");
+        this->setStyleSheet("MainWindow{background-color: black; \
+            color: white;} \
+            QMenu{background: #444444; \
+            color: white;} \
+            QMenuBar{background: #444444; \
+            color: white;} \
+            QMenuBar::item{background-color: #444444;} \
+            QMenuBar::item:selected{background-color: #666666;} \
+            QScrollBar:vertical{background-color: black;} \
+            QTabBar::tab{background-color: #444444; \
+            color: white;} \
+            QTabBar::tab:selected{background-color: #666666;} \
+            QTabWidget::pane{border: 2px solid #444444} \
+            QSplitter::handle{background-color: black;} \
+            QLineEdit{background-color: black; \
+            color: white; \
+            border: 2px solid #444444;} \
+            QTableView{background-color: #333333; \
+            alternate-background-color: #555555; \
+            color: white;} \
+            QTableCornerButton::section{background-color: #444444; \
+            border: 2px;} \
+            QHeaderView::section{background-color: #444444; \
+            color: white;} \
+            QLabel{color: white;} \
+            QListWidget{color: white} \
+            QToolButton{background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+            stop:0 #444444, stop:1 #666666); \
+            color: white; \
+            border: none;} \
+            QToolButton::pressed{background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+            stop:0 #AAAAAA, stop:1 #CCCCCC); \
+            color: white; \
+            border: 2px solid white;} \
+            QToolButton::hover{background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+            stop:0 #999999, stop:1 #BBBBBB);} \
+            QCheckBox{background: black;} \
+            ");
+        m_timeSlider->setStyleSheet(m_timeSlider->styleSheet() + ts_styleSheet);
+        m_imageLabel->setStyleSheet("QLabel{border: 2px solid #444444;\
+            color: white;}");
+
+    }
+    else{
+    m_tabs->setStyleSheet("");
+    m_volumeSlider->setStyleSheet("");
+    this->setStyleSheet("");
+    m_imageLabel->setStyleSheet("");
+    m_timeSlider->setStyleSheet(m_timeSlider->styleSheet() + "QSlider::add-page:horizontal { \
+        background: #fff; \
+        border: 1px solid #777; \
+        height: 10px; \
+        border-radius: 4px;} \
+        QSlider::handle:horizontal { \
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+        stop:0 #eee, stop:1 #ccc); \
+        border: 1px solid #777; \
+        width: 13px; \
+        margin-top: -2px; \
+        margin-bottom: -2px; \
+        border-radius: 4px; \
+        } \
+        QSlider::handle:horizontal:hover { \
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+        stop:0 #fff, stop:1 #ddd); \
+        border: 1px solid #444; \
+        border-radius: 4px; \
+        } \
+        ");
+    }
+}
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::taglibAlbumArt
 //
 // Obtain the cover art for a given track using taglib.
 //
-
 QImage MainWindow::imageForTag(TagLib::ID3v2::Tag *tag)
 {
     QImage image;
@@ -1392,4 +1524,8 @@ void MainWindow::s_tableUpdate()
     while(m_table->item(i,1)->text()  != m_playlistTable->item(m_playlistTable->currentRow(),0)->text() && i < m_table->rowCount())
         i++;
     m_table->setCurrentCell(i,0);
+}
+
+void MainWindow::s_albumLabel(QString newAlbum){
+    m_albumLabel->setText(newAlbum);
 }

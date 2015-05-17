@@ -11,6 +11,7 @@ public:
 	~SquaresWidget();
 signals:
     void s_albumSelected(QString);
+    void s_currentAlbum(QString);
 public slots:
     void s_shiftLeft();
     void s_shiftRight();

@@ -72,7 +72,9 @@ public slots:
     void s_setDuration(qint64);
     void s_playlistUpdate();
     void s_redrawAlbum(QString);
+    void s_albumLabel(QString);
     void s_tableUpdate();
+    void s_toggleNightMode();
 
 private:
 	void createActions();
@@ -99,12 +101,14 @@ private:
     QAction     *m_normalAction;
     QAction     *m_fasterAction;
     QAction     *m_fastestAction;
+    QAction     *m_nightmodeAction;
     QActionGroup *m_playbackAction;
 
 	// menus
 	QMenu		*m_fileMenu;
 	QMenu		*m_helpMenu;
     QMenu       *m_playbackMenu;
+    QMenu       *m_prefMenu;
 
 	// widgets
 	QWidget *m_mainWidget;
@@ -144,11 +148,13 @@ private:
 	QImage m_tdResizedArt;
 	
 	SquaresWidget *m_squares;
+    QLabel *m_albumLabel;
 	QMediaPlayer *m_mediaplayer;
 	
 	QList <QImage> *m_artlist;
     QList <QString> *m_albumList;
 
+    QString ts_styleSheet;
 	// string lists
 	QString		   m_directory;
 	QStringList	   m_listGenre;

@@ -45,6 +45,8 @@ public:
 
     bool eventFilter(QObject *object, QEvent *event);
     void keyPressEvent(QKeyEvent * event);
+    bool isSearch;
+    int colorval;
 signals:
 	void s_artLoaded(QList<QImage> *);
         void s_visualizerSpeed(signed int);
@@ -71,6 +73,10 @@ public slots:
     void s_updateLabel(qint64);
     void s_changeSpeed();
     void s_setDuration(qint64);
+    void s_searchSongs();
+    void s_toggleNightMode();
+    void s_setSliderColor(QString, QString, QString);
+    void s_cycleSliderColor();
     void playlistUpdate();
 
 private:
@@ -91,6 +97,8 @@ private:
 	QAction		*m_loadAction;
 	QAction		*m_quitAction;
 	QAction		*m_aboutAction;
+    QAction     *m_nightmodeAction;
+    QAction     *m_slidercolorAction;
 
         QAction     *m_slowestAction;
         QAction     *m_slowerAction;
@@ -102,7 +110,8 @@ private:
 	// menus
 	QMenu		*m_fileMenu;
 	QMenu		*m_helpMenu;
-        QMenu       *m_playbackMenu;
+    QMenu       *m_playbackMenu;
+    QMenu       *m_prefMenu;
 
 	// widgets
 	QWidget *m_mainWidget;
@@ -135,6 +144,7 @@ private:
 	QToolButton *m_albumright;
 	QToolButton *m_loadart;
 	QToolButton *m_showimage;
+    QToolButton *m_search;
 	
     QSlider *m_volumeSlider;
 	QSlider *m_timeSlider;
@@ -144,6 +154,7 @@ private:
 	QHBoxLayout *m_sliderlayout; 
 	QImage m_resizedArt; 
 	QImage m_tdResizedArt;
+    QLineEdit *m_searchbox;
 	
 	SquaresWidget *m_squares;
 	QMediaPlayer *m_mediaplayer;
@@ -156,6 +167,7 @@ private:
 	QStringList	   m_listArtist;
 	QStringList	   m_listAlbum;
 	QList<QStringList> m_listSongs;
+    QList<QString> m_listFound;
 
     QTabWidget *m_tabs;
     VisualizerWidget *m_visualizer;

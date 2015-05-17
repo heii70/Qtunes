@@ -65,6 +65,26 @@ MainWindow::MainWindow	(QString program)
     setFocusPolicy(Qt::StrongFocus);
     isSearch = false;
     colorval = 0;
+    ts_styleSheet = "QSlider::add-page:horizontal { \
+                    background: #444; \
+                    border: 1px solid #777; \
+                    height: 10px; \
+                    border-radius: 4px;} \
+                    QSlider::handle:horizontal { \
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+                    stop:0 #666, stop:1 #888); \
+                    border: 1px solid #777; \
+                    width: 13px; \
+                    margin-top: -2px; \
+                    margin-bottom: -2px; \
+                    border-radius: 4px; \
+                    } \
+                    QSlider::handle:horizontal:hover { \
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+                    stop:0 #999, stop:1 #BBB); \
+                    border: 1px solid #444; \
+                    border-radius: 4px; \
+                    }";
 
     m_normalAction->setChecked(true);
     m_timeSlider->installEventFilter(this);
@@ -154,17 +174,6 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event){
                 return true;
             }
         }
-    }
-    if(object == m_volumeSlider && event->type() == QEvent::MouseButtonPress){
-        QMouseEvent *mouseEvent2 = static_cast<QMouseEvent *>(event);
-        if(mouseEvent2->button() == Qt::LeftButton){
-            int newvolume = QStyle::sliderValueFromPosition(0,100,mouseEvent2->x(),100,0);
-            int curvolume = QStyle::sliderValueFromPosition(0,100,m_volumeSlider->value(),m_volumeSlider->maximum(),0);
-            qDebug() << newvolume << curvolume;
-            if(abs(newvolume - curvolume) > 5)
-                m_volumeSlider->setValue(newvolume);
-        }
-
     }
     return false;
 }
@@ -684,11 +693,11 @@ MainWindow::redrawLists(QListWidgetItem *listItem, int x)
               m_table->item(i,0)->setText("");
               m_table->setCellWidget(i,0,p_widget);
 
-
+              if(isSearch == false){
               m_playlistTable->insertRow(i);
               playlistItem->setText(m_table->item(i,1)->text());
               m_playlistTable->setItem(i,0,playlistItem);
-
+              }
         }
 }
 
@@ -1200,6 +1209,20 @@ void MainWindow::s_toggleNightMode(){
 if(m_nightmodeAction->isChecked()){
 m_tabs->setStyleSheet("background: black; \
                       ");
+m_volumeSlider->setStyleSheet("QSlider::groove:horizonal{background-color: #444444; \
+                              height: 5px; \
+                              border: 1px solid grey;} \
+                              QSlider::handle:horizonal{background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+                              stop:0 #555555, stop:1 #777777); \
+                              border: 1px solid grey; \
+                              width: 5px; \
+                              margin: -5px;} \
+                              QSlider::handle:horizontal:disabled { \
+                              background-color: #444; \
+                              border: 1px solid grey; \
+                              width: 5px; \
+                              border-radius: 4px;} \
+                              ");
 this->setStyleSheet("MainWindow{background-color: black; \
                     color: white;} \
                     QMenu{background: #444444; \
@@ -1224,11 +1247,48 @@ this->setStyleSheet("MainWindow{background-color: black; \
                     border: 2px;} \
                     QHeaderView::section{background-color: #444444; \
                     color: white;} \
+                    QLabel{border: 2px solid #444444; \
+                    color: white;} \
+                    QListWidget{color: white} \
+                    QToolButton{background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+                    stop:0 #444444, stop:1 #666666); \
+                    color: white; \
+                    border: none;} \
+                    QToolButton::pressed{background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+                    stop:0 #AAAAAA, stop:1 #CCCCCC); \
+                    color: white; \
+                    border: 2px solid white;} \
+                    QToolButton::hover{background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+                    stop:0 #999999, stop:1 #BBBBBB);} \
+                    QCheckBox{background: black;} \
                     ");
+m_timeSlider->setStyleSheet(m_timeSlider->styleSheet() + ts_styleSheet);
 }
 else{
 m_tabs->setStyleSheet("");
+m_volumeSlider->setStyleSheet("");
 this->setStyleSheet("");
+m_timeSlider->setStyleSheet(m_timeSlider->styleSheet() + "QSlider::add-page:horizontal { \
+                            background: #fff; \
+                            border: 1px solid #777; \
+                            height: 10px; \
+                            border-radius: 4px;} \
+                            QSlider::handle:horizontal { \
+                            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+                            stop:0 #eee, stop:1 #ccc); \
+                            border: 1px solid #777; \
+                            width: 13px; \
+                            margin-top: -2px; \
+                            margin-bottom: -2px; \
+                            border-radius: 4px; \
+                            } \
+                            QSlider::handle:horizontal:hover { \
+                            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+                            stop:0 #fff, stop:1 #ddd); \
+                            border: 1px solid #444; \
+                            border-radius: 4px; \
+                            } \
+                            ");
 }
 }
 
@@ -1264,6 +1324,10 @@ void MainWindow::s_cycleSliderColor(){
     }
 
     colorval++;
+
+    if(m_nightmodeAction->isChecked())
+        m_timeSlider->setStyleSheet(m_timeSlider->styleSheet() + ts_styleSheet);
+
 }
 
 void MainWindow::s_setSliderColor(QString a, QString b, QString c){

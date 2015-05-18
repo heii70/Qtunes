@@ -44,6 +44,8 @@ public:
 	~MainWindow();
     bool eventFilter(QObject *, QEvent *);
     void keyPressEvent(QKeyEvent *);
+    bool isSearch;
+    int colorval;
 signals:
     void s_artLoaded(QList<QImage> *, QList<QString> *);
     void s_visualizerSpeed(signed int);
@@ -75,6 +77,9 @@ public slots:
     void s_albumLabel(QString);
     void s_tableUpdate();
     void s_toggleNightMode();
+    void s_searchSongs();
+    void s_setSliderColor(QString, QString, QString);
+    void s_cycleSliderColor();
 
 private:
 	void createActions();
@@ -102,6 +107,7 @@ private:
     QAction     *m_fasterAction;
     QAction     *m_fastestAction;
     QAction     *m_nightmodeAction;
+    QAction     *m_slidercolorAction;
     QActionGroup *m_playbackAction;
 
 	// menus
@@ -137,6 +143,7 @@ private:
     QToolButton *m_shuffle;
     QToolButton *m_checkboxSelect;
     QToolButton *m_loadArt;
+    QToolButton *m_search;
 	
     QSlider *m_volumeSlider;
 	QSlider *m_timeSlider;
@@ -146,6 +153,7 @@ private:
     QHBoxLayout *m_sliderLayout;
 	QImage m_resizedArt; 
 	QImage m_tdResizedArt;
+        QLineEdit *m_searchbox;
 	
 	SquaresWidget *m_squares;
     QLabel *m_albumLabel;

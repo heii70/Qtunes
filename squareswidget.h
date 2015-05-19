@@ -2,6 +2,16 @@
 #define SQUARESWIDGET_H
 
 #include <QOpenGLWidget>
+#include "MainWindow.h"
+#include <fileref.h>
+#include <tag.h>
+#include <tpropertymap.h>
+#include <tbytevector.h>
+#include <id3v2tag.h>
+#include <mpegfile.h>
+#include <id3v2frame.h>
+#include <id3v2header.h>
+#include <attachedpictureframe.h>
 
 class SquaresWidget : public QOpenGLWidget
 {
@@ -15,7 +25,7 @@ signals:
 public slots:
     void s_shiftLeft();
     void s_shiftRight();
-    void s_MP3Art(QList<QImage> *, QList<QString> *);
+    void s_MP3Art(QList<QString> *, QList<QString> *);
 protected:
 	void initializeGL();
 	void resizeGL(int w, int h);
@@ -25,6 +35,7 @@ private:
     void mousePressEvent(QMouseEvent *);
     void mouseDoubleClickEvent(QMouseEvent* event);
     void defaultImage();
+    QImage imageForTag(TagLib::ID3v2::Tag *tag);
 
     float m_translate, m_translateBuffer, m_shift,
         m_centerRegion, m_albumDepth;
@@ -35,5 +46,6 @@ private:
 	QString m_directory;
 	QTimer *m_timer; //automatically resets itself
     QList<QString> *m_albumList;
+    QList<QString> *m_pathList;
 };
 #endif

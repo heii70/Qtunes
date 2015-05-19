@@ -2,9 +2,21 @@
 #include <fstream>
 #include <assert.h>
 #include "squareswidget.h"
+#include "MainWindow.h"
 #include <glu.h>
 #include <QtWidgets>
 #include <QGLWidget>
+
+#include <fileref.h>
+#include <tag.h>
+#include <tpropertymap.h>
+#include <tbytevector.h>
+#include <id3v2tag.h>
+#include <mpegfile.h>
+#include <id3v2frame.h>
+#include <id3v2header.h>
+#include <attachedpictureframe.h>
+
 using namespace std;
 
 typedef struct {
@@ -71,32 +83,61 @@ void SquaresWidget::s_shiftRight(){
     if(m_translate + 0.1 < -1*m_shift*(m_numRecords/2)-1) return;
 	m_translate -= m_shift;
 }
-/* s_loadart() is a slot function that is connected to a signal
- * from MainWindow that is emitted when the m_loadart button is 
- * pressed. This button is the button with the folder icon and 
- * this function will create a new dialog that can be used to
- * choose a folder. Calls function traverseDirs once a folder is
- * selected
- * NOTE: used in getting album art from .ppm files
- * */
+
+/* imageForTag(TagLib::ID3v2::Tag *tag) is identical to the function
+* in MainWindow.cpp. It takes in an ID3v2 tag and returns a QImage
+* containing the tag's album art. If the list is empty, or the image
+* is null by the end of the function, it will instead return a default
+* image from QResource.
+* */
+
+QImage SquaresWidget::imageForTag(TagLib::ID3v2::Tag *tag){
+    QImage image;
+    //Creates a framelist from the given tag using "APIC",
+    //Which stands for "attached picture"
+    const TagLib::ID3v2::FrameList list = tag->frameList("APIC");
+
+    //front() specifies the cover art of the song
+    TagLib::ID3v2::AttachedPictureFrame *frame =
+        static_cast<TagLib::ID3v2::AttachedPictureFrame *>(list.front());
+    //Load the picture from the song's frame into the Qimage, and return it
+    image.loadFromData((const uchar *) frame->picture().data(), frame->picture().size());
+
+    if(image.isNull() || list.isEmpty()){
+        image.load(":/Resources/Default.png");
+        return image;
+    }
+
+    return image;
+}
 
 /* s_MP3Art is a slot function that is connected to a signal
  * from MainWindow that is emitted when the traverseDirs function
- * is called. It takes in a QList of QImages that have been "given"
- * to it by MainWindow's traverseDirs function and sets up the array
+ * is called. It takes in two QList<QString> of paths and albums that have
+ * been "given" to it by MainWindow's traverseDirs function and sets up the array
  * of records to have elements with OpenGL textures from the QImages
  * */
-void SquaresWidget::s_MP3Art(QList<QImage> *artlist, QList<QString> *albumlist){
+
+void SquaresWidget::s_MP3Art(QList<QString> * listSongs, QList<QString> *albumlist){
     m_albumList = albumlist;
+    m_pathList = listSongs;
     m_fromMP3 = true;
-    if(artlist->size() == 0) return;
+    if(m_pathList->size() == 0) return;
     m_recordsLoaded = true;
-    m_numRecords = artlist->size();
+    m_numRecords = m_pathList->size();
     records = (Record*) malloc(sizeof(Record) * m_numRecords);
 	
 	glEnable(GL_TEXTURE_2D);
     for(int i=0; i < m_numRecords; i++) {
-		QString temp_string = QString("record %1").arg(i+1);
+
+        QByteArray ba_temp = m_pathList->at(i).toLocal8Bit();
+        const char* filepath = ba_temp.data();
+        TagLib::MPEG::File audioFile(filepath);
+        TagLib::ID3v2::Tag *tag = audioFile.ID3v2Tag(true);
+        QImage coverArt = imageForTag(tag);
+        QImage ResizedArt = coverArt.scaled(250,250,Qt::KeepAspectRatio);
+
+        //QString temp_string = QString("record %1").arg(i+1);
 		records[i].width  = 4;
 		records[i].height = 4;
 	    glGenTextures  (1, &records[i].texId);
@@ -105,7 +146,7 @@ void SquaresWidget::s_MP3Art(QList<QImage> *artlist, QList<QString> *albumlist){
 	    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
-		QImage image_gl = QGLWidget::convertToGLFormat(artlist->at(i));
+        QImage image_gl = QGLWidget::convertToGLFormat(ResizedArt);
 	    glTexImage2D   (GL_TEXTURE_2D, 0, GL_RGBA, image_gl.width(), image_gl.height(), 0, GL_RGBA,
 			    GL_UNSIGNED_BYTE, image_gl.bits());
 	}

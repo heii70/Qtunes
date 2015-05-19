@@ -47,7 +47,7 @@ public:
     bool isSearch;
     int colorval;
 signals:
-    void s_artLoaded(QList<QImage> *, QList<QString> *);
+    void s_artLoaded(QList<QString> *, QList<QString> *);
     void s_visualizerSpeed(signed int);
 
 public slots:
@@ -93,8 +93,8 @@ private:
 	void redrawLists  (QListWidgetItem *, int);
     void redrawLists  (QList<QString> *, int);
 	void traverseDirs (QString);
-	void setSizes	  (QSplitter *, int, int);
-	QImage imageForTag(TagLib::ID3v2::Tag *tag);
+    void setSizes	  (QSplitter *, int, int);
+    QImage imageForTag(TagLib::ID3v2::Tag *tag);
 
 	// actions
 	QAction		*m_loadAction;
@@ -153,14 +153,15 @@ private:
     QHBoxLayout *m_sliderLayout;
 	QImage m_resizedArt; 
 	QImage m_tdResizedArt;
-        QLineEdit *m_searchbox;
+    QLineEdit *m_searchbox;
+    QTableWidgetItem *m_prevItem;
 	
 	SquaresWidget *m_squares;
     QLabel *m_albumLabel;
 	QMediaPlayer *m_mediaplayer;
 	
-	QList <QImage> *m_artlist;
     QList <QString> *m_albumList;
+    QList <QString> *m_pathList;
 
     QString ts_styleSheet;
 	// string lists

@@ -186,10 +186,10 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
                 return;
             }
     case Qt::Key_Left:
-        m_squares->s_shiftLeft();
+        m_squares->shiftLeft();
         return;
     case Qt::Key_Right:
-        m_squares->s_shiftRight();
+        m_squares->shiftRight();
         return;
     case Qt::Key_Up:
         m_volumeSlider->setValue(m_volumeSlider->value() + m_volumeSlider->pageStep());
@@ -329,23 +329,6 @@ MainWindow::createWidgets()
                                 "background-color : transparent;"
                                 "color : white;}");
 
-	// initialize label on right side of main splitter
-	for(int i=0; i<3; i++) {
-		// make label widget with centered text and sunken panels
-		m_label[i] = new QLabel;
-		m_label[i]->setAlignment(Qt::AlignCenter);
-		m_label[i]->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-	}
-
-	// initialize label text
-	m_label[0]->setText("<b>Genre<\b>" );
-	m_label[1]->setText("<b>Artist<\b>");
-	m_label[2]->setText("<b>Album<\b>" );
-
-	// initialize list widgets: genre, artist, album
-	for(int i=0; i<3; i++)
-		m_panel[i] = new QListWidget;
-
     // initialize table widget and playlist table widget
     m_playlistTable = new QTableWidget(0, 1);
     QHeaderView *playlist_header = new QHeaderView(Qt::Horizontal,m_playlistTable);
@@ -358,6 +341,22 @@ MainWindow::createWidgets()
     m_playlistTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_playlistTable->setMaximumWidth(175);
     m_playlistTable->resize(175,450);
+
+    for(int i=0; i<3; i++) {
+        // make label widget with centered text and sunken panels
+        m_label[i] = new QLabel;
+        m_label[i]->setAlignment(Qt::AlignCenter);
+        m_label[i]->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+    }
+
+    // initialize label text
+    m_label[0]->setText("<b>Genre<\b>" );
+    m_label[1]->setText("<b>Artist<\b>");
+    m_label[2]->setText("<b>Album<\b>" );
+
+    // initialize list widgets: genre, artist, album
+    for(int i=0; i<3; i++)
+        m_panel[i] = new QListWidget;
 
 	m_table = new QTableWidget(0, COLS);
 	QHeaderView *header = new QHeaderView(Qt::Horizontal,m_table);
@@ -375,11 +374,11 @@ MainWindow::createWidgets()
     // init more signal/slot connections
 	connect(m_panel[0],	SIGNAL(itemClicked(QListWidgetItem*)),
 		this,		  SLOT(s_panel1   (QListWidgetItem*)));
-        connect(m_panel[1],	SIGNAL(itemClicked(QListWidgetItem*)),
+    connect(m_panel[1],	SIGNAL(itemClicked(QListWidgetItem*)),
 		this,		  SLOT(s_panel2   (QListWidgetItem*)));
-        connect(m_panel[2],	SIGNAL(itemClicked(QListWidgetItem*)),
+    connect(m_panel[2],	SIGNAL(itemClicked(QListWidgetItem*)),
 		this,		  SLOT(s_panel3   (QListWidgetItem*)));
-        connect(m_table,	SIGNAL(itemDoubleClicked(QTableWidgetItem*)),
+    connect(m_table,	SIGNAL(itemDoubleClicked(QTableWidgetItem*)),
 		this,		  SLOT(s_play	  (QTableWidgetItem*)));
 
     m_visualizer = new VisualizerWidget;
@@ -555,7 +554,6 @@ MainWindow::initLists()
 	// create separate lists for genres, artists, and albums
 	for(int i=0; i<m_listSongs.size(); i++) {
 		m_listGenre  << m_listSongs[i][GENRE ];
-		// do same for m_listArtist and m_listAlbum using ARTIST and ALBUM constants
 		m_listArtist << m_listSongs[i][ARTIST ];
 		m_listAlbum << m_listSongs[i][ALBUM ];
 	}
@@ -569,8 +567,7 @@ MainWindow::initLists()
     m_panel[0]->addItem("All");
 	for(int i=0; i<m_listGenre.size(); i+=m_listGenre.count(m_listGenre[i]))
 		m_panel[0]->addItem(m_listGenre [i]);
-	// do same for m_listArtist and m_listAlbum to populate m_panel[1] and m_panel[2]
-	for(int i=0; i<m_listArtist.size(); i+=m_listArtist.count(m_listArtist[i]))
+    for(int i=0; i<m_listArtist.size(); i+=m_listArtist.count(m_listArtist[i]))
 		m_panel[1]->addItem(m_listArtist [i]);
 	for(int i=0; i<m_listAlbum.size(); i+=m_listAlbum.count(m_listAlbum[i]))
 		m_panel[2]->addItem(m_listAlbum [i]);
@@ -805,10 +802,6 @@ MainWindow::traverseDirs(QString path)
 		QFileInfo fileInfo = listDirs.at(i);
         traverseDirs(fileInfo.filePath());
 	}
-	if(listDirs.size() == 0){
-        emit s_artLoaded(m_artlist,m_albumList);
-		return;
-	}
 	return;
 }		
 
@@ -840,16 +833,19 @@ MainWindow::s_load()
     //m_progressBar->setFixedSize(300,100);
     //m_progressBar->setCancelButtonText("Cancel");
 
-    m_listSongs.clear();
+    //m_listSongs.clear();
     m_table->setRowCount(0);
     m_playlistTable->setRowCount(0);
     m_panel[0]->clear();
     m_panel[1]->clear();
     m_panel[2]->clear();
     m_artlist->clear();
+    m_albumList->clear();
     m_mediaplayer->stop();
     traverseDirs(m_directory);
 	initLists();
+    if(m_artlist->size() != 0 && m_albumList->size() != 0)
+        emit s_artLoaded(m_artlist,m_albumList);
     //m_progressBar->close();
 }
 
@@ -881,9 +877,10 @@ MainWindow::s_panel1(QListWidgetItem *item)
 	
 	// collect list of artists and albums
 	for(int i=0; i<m_listSongs.size(); i++) {
-		if(m_listSongs[i][GENRE] == item->text())
+        if(m_listSongs[i][GENRE] == item->text()){
 			m_listArtist << m_listSongs[i][ARTIST];
 			m_listAlbum << m_listSongs[i][ALBUM];
+        }
 	}
 
 	// sort remaining two panels for artists and albums
@@ -1274,7 +1271,6 @@ MainWindow::s_play(QTableWidgetItem *item)
     if(item == NULL)
         return;
     if(m_mediaplayer->state() == 2){
-        qDebug("Resuming from paused state \n");
         m_mediaplayer->play();
         return;
     }
@@ -1297,9 +1293,7 @@ MainWindow::s_play(QTableWidgetItem *item)
         m_imageLabel->setScaledContents(true);
         //Puts the resized image into the image label
         m_imageLabel->setPixmap(QPixmap::fromImage(m_resizedArt));
-        //qDebug("Trying to play \n");
 		if(m_stop->isDown()){
-            //qDebug("Trying to stop");
 			m_mediaplayer->stop();
 		}
 		return;
@@ -1308,7 +1302,6 @@ MainWindow::s_play(QTableWidgetItem *item)
 void MainWindow::statusChanged(QMediaPlayer::MediaStatus status)
 {
     if(status == QMediaPlayer::BufferedMedia){
-        qDebug("Media is buffered");
         //Sets the window title to be the in the following format:
         //<Artist> - <Title>
         QString QTunes = " - ";

@@ -35,7 +35,7 @@
 using namespace std;
 using namespace TagLib;
 
-enum {SELECT, TITLE, TRACK, TIME, ARTIST, ALBUM, GENRE, PATH, ALBUMID};
+enum {SELECT, TITLE, TRACK, TIME, ARTIST, ALBUM, GENRE, PATH};
 const int COLS = PATH;
 
 bool caseInsensitive(const QString &s1, const QString &s2)
@@ -714,34 +714,9 @@ MainWindow::redrawLists(QListWidgetItem *listItem, int x)
 }
 void
 MainWindow::s_redrawAlbum(QString albumname){
-    //m_table->setRowCount(0);
-    m_playlistTable->setRowCount(0);
-    for(int i = 0, row = 0; i < m_listSongs.size(); i++){
-        if(m_listSongs[i][ALBUM] != albumname) continue;
-
-        m_table->insertRow(row);
-        QTableWidgetItem *item[COLS];
-        for(int j=0; j<COLS; j++) {
-            item[j] = new QTableWidgetItem;
-            item[j]->setText(m_listSongs[i][j]);
-            item[j]->setTextAlignment(Qt::AlignCenter);
-            m_table->setItem(row,j,item[j]);
-        }
-        row++;
-    }
-    for(int i = 0; i < m_table->rowCount(); i++) {
-          QCheckBox *p_checkbox = new QCheckBox;
-          QWidget* p_widget = new QWidget;
-          p_checkbox->setChecked(true);
-
-          QHBoxLayout* p_layout = new QHBoxLayout(p_widget);
-          p_layout->addWidget(p_checkbox);
-          p_layout->setAlignment(Qt::AlignCenter);
-          p_widget->setLayout(p_layout);
-
-          m_table->item(i,0)->setText("");
-          m_table->setCellWidget(i,0,p_widget);
-    }
+    QListWidgetItem *albumItem = new QListWidgetItem();
+    albumItem->setText(albumname);
+    redrawLists(albumItem,ALBUM);
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -799,8 +774,7 @@ MainWindow::traverseDirs(QString path)
                     m_pathList->append(fileInfo.filePath());
                     //qDebug() << fileInfo.filePath();
 				}
-				QString tempalbum = QString("%1").arg(albumcount);
-
+                //QString tempalbum = QString("%1").arg(albumcount);
                 //list.replace(ALBUMID,tempalbum);
 			}
 			prev_album = TStringToQString(tag->album());

@@ -1,7 +1,8 @@
 #ifndef SQUARESWIDGET_H
 #define SQUARESWIDGET_H
-
 #include <QOpenGLWidget>
+#include <tag.h>
+#include <id3v2tag.h>
 
 class SquaresWidget : public QOpenGLWidget
 {
@@ -15,7 +16,7 @@ signals:
     void s_albumSelected(QString);
     void s_currentAlbum(QString);
 public slots:
-    void s_MP3Art(QList<QImage> *, QList<QString> *);
+    void s_MP3Art(QList<QString> *, QList<QString> *);
 protected:
 	void initializeGL();
 	void resizeGL(int w, int h);
@@ -25,6 +26,7 @@ private:
     void mousePressEvent(QMouseEvent *);
     void mouseDoubleClickEvent(QMouseEvent* event);
     void defaultImage();
+    QImage imageForTag(TagLib::ID3v2::Tag *tag);
 
     float m_translate, m_translateBuffer, m_shift,
         m_centerRegion, m_albumDepth;
@@ -35,6 +37,7 @@ private:
 	QString m_directory;
 	QTimer *m_timer; //automatically resets itself
     QList<QString> *m_albumList;
+    QList<QString> *m_pathList;
     QList<GLuint> *m_glTexID;
     GLuint m_defTexID;
 };

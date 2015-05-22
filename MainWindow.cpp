@@ -63,6 +63,8 @@ MainWindow::MainWindow	(QString program)
 	// set main window titlebar
     setWindowTitle("QTunes Music Player");
     setFocusPolicy(Qt::StrongFocus);
+    isSearch = false;
+    colorval = 0;
 
     ts_styleSheet = "QSlider::add-page:horizontal { \
                         background: #444; \
@@ -91,8 +93,9 @@ MainWindow::MainWindow	(QString program)
 	setCentralWidget(m_mainWidget);
     setMinimumSize(830, 500);
 	resize(830, 850);
-	m_artlist = new QList<QImage>;
     m_albumList = new QList<QString>;
+    m_pathList = new QList<QString>;
+    m_fullPathList = new QList<QString>;
 	connect(m_stop, SIGNAL(clicked()), m_mediaplayer, SLOT(stop()));
     connect(m_play, SIGNAL(clicked()), this, SLOT(s_playButton()));
     connect(m_pause, SIGNAL(clicked()), this, SLOT(s_pauseButton()));
@@ -111,14 +114,16 @@ MainWindow::MainWindow	(QString program)
 	connect(m_timeSlider, SIGNAL(sliderMoved(int)), this, SLOT(s_seek(int))); 
     connect(m_table,SIGNAL(itemClicked(QTableWidgetItem*)),this,SLOT(s_playlistUpdate()));
     connect(m_playlistTable, SIGNAL(itemClicked(QTableWidgetItem*)), this, SLOT(s_tableUpdate()));
-    connect(this, SIGNAL(s_artLoaded(QList<QImage>*, QList<QString>*)),
-            m_squares,SLOT(s_MP3Art(QList<QImage>*,QList<QString>*)));
+    connect(this, SIGNAL(s_artLoaded(QList<QString>*, QList<QString>*)),
+            m_squares,SLOT(s_MP3Art(QList<QString>*,QList<QString>*)));
     connect(m_mediaplayer,SIGNAL(stateChanged(QMediaPlayer::State)),m_visualizer,
             SLOT(s_toggle(QMediaPlayer::State)));
     connect(this,SIGNAL(s_visualizerSpeed(signed int)),m_visualizer,
             SLOT(s_changeSpeed(signed int)));
     connect(m_squares,SIGNAL(s_albumSelected(QString)),this,SLOT(s_redrawAlbum(QString)));
     connect(m_squares,SIGNAL(s_currentAlbum(QString)),this,SLOT(s_albumLabel(QString)));
+    connect(m_searchbox, SIGNAL(returnPressed()), this, SLOT(s_searchSongs()));
+    connect(m_search, SIGNAL(clicked()),this,SLOT(s_searchSongs()));
 }
 
 
@@ -141,21 +146,24 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event){
     //If the widget m_timeSlider is clicked, do something
     if(object == m_timeSlider && event->type() == QEvent::MouseButtonPress){
         //Creates a QMouseEvent in order to read the type of mouse click used
-        QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+        QMouseEvent *mouseEvent1 = static_cast<QMouseEvent *>(event);
         //If the time slider is clicked with the left button
-        if(mouseEvent->button() == Qt::LeftButton){
+        if(mouseEvent1->button() == Qt::LeftButton){
             //newposition is mapped from the x-value of the mouse click within the time slider to a value from 0 to 400
             //It represents the destination (where we want the slider handle to jump to)
-            int newposition = QStyle::sliderValueFromPosition(0,400,mouseEvent->x(),400,0);
+            int newposition = QStyle::sliderValueFromPosition(0,500,mouseEvent1->x(),500,0);
             //curposition is mapped from the current value of the time slider relative to its maximum value in the same range as above
             //It represents the slider handle's current position
-            int curposition = QStyle::sliderValueFromPosition(0,400,m_timeSlider->value(),m_timeSlider->maximum(),0);
-            qDebug() << newposition << curposition;
+            int curposition = QStyle::sliderValueFromPosition(0,500,m_timeSlider->value(),m_timeSlider->maximum(),0);
             //If these two values differ by a value greater than 10 (or 1/40 of the slider), the slider will jump
             //Without this, the slider will jump even when clicking the handle, and will therefore be undraggable
             if(abs(newposition - curposition) > 10){
+                //The following two lines shift the new slider position more to the left or right depending on whether
+                // it is clicked at the beginnning or end respectively. This allows the new position to be more accurate.
+                int adjustTime = 10 - newposition/25;
+                newposition = newposition - adjustTime;
                 //Turns the new position into a fraction of the slider
-                float percent = (float)newposition/400;
+                float percent = (float)newposition/500;
                 //Multiplies the fraction of the bar by its total duration to get the exact time (may be off by a fraction of a millisecond)
                 int newTime = percent*m_mediaplayer->duration();
                 //Move both the m_mediaplayer position as well as the slider position to the new position
@@ -222,7 +230,7 @@ MainWindow::createActions()
 
     // The following five QActions set the different playback speeds of the player
 
-    m_slowestAction = new QAction("Slowest (0.50x)", this);
+    m_slowestAction = new QAction("&Slowest (0.50x)", this);
     m_slowestAction->setCheckable(true);
     connect(m_slowestAction, SIGNAL(triggered()), this, SLOT(s_changeSpeed()));
 
@@ -230,7 +238,7 @@ MainWindow::createActions()
     m_slowerAction->setCheckable(true);
     connect(m_slowerAction, SIGNAL(triggered()), this, SLOT(s_changeSpeed()));
 
-    m_normalAction = new QAction("Normal (1.00x)", this);
+    m_normalAction = new QAction("&Normal (1.00x)", this);
     m_normalAction->setCheckable(true);
     connect(m_normalAction, SIGNAL(triggered()), this, SLOT(s_changeSpeed()));
 
@@ -238,7 +246,7 @@ MainWindow::createActions()
     m_fasterAction->setCheckable(true);
     connect(m_fasterAction, SIGNAL(triggered()), this, SLOT(s_changeSpeed()));
 
-    m_fastestAction = new QAction("Fastest (1.50x)", this);
+    m_fastestAction = new QAction("&Fastest (1.50x)", this);
     m_fastestAction->setCheckable(true);
     connect(m_fastestAction, SIGNAL(triggered()), this, SLOT(s_changeSpeed()));
 
@@ -253,11 +261,14 @@ MainWindow::createActions()
     m_playbackAction->addAction(m_fasterAction);
     m_playbackAction->addAction(m_fastestAction);
 
-    m_nightmodeAction = new QAction("Night Mode", this);
+    m_nightmodeAction = new QAction("&Night Mode", this);
     m_nightmodeAction->setShortcut(tr("Ctrl+N"));
     m_nightmodeAction->setCheckable(true);
     connect(m_nightmodeAction, SIGNAL(triggered()), this, SLOT(s_toggleNightMode()));
 
+    m_slidercolorAction = new QAction("&Cycle slider color",this);
+    m_slidercolorAction->setShortcut(tr("Ctrl+C"));
+    connect(m_slidercolorAction,SIGNAL(triggered()),this,SLOT(s_cycleSliderColor()));
 }
 
 
@@ -286,6 +297,7 @@ MainWindow::createMenus()
 
     m_prefMenu = menuBar()->addMenu("&Preferences");
     m_prefMenu->addAction(m_nightmodeAction);
+    m_prefMenu->addAction(m_slidercolorAction);
 }
 
 
@@ -406,20 +418,23 @@ MainWindow::createLayouts()
 
 	// add widgets to the splitters
 	QWidget *buttonwidget = new QWidget;
+    QWidget *sliderwidget = new QWidget;
     m_buttonLayout = new QHBoxLayout;
-	//m_play = new QPushButton("Play");
 	m_play = new QToolButton;
+    m_play->setDisabled(true);
 	m_stop = new QToolButton;
+    m_stop->setDisabled(true);
     m_prevSong = new QToolButton;
+    m_prevSong->setDisabled(true);
     m_nextSong = new QToolButton;
+    m_nextSong->setDisabled(true);
 	m_pause = new QToolButton;
-    //m_unfilter = new QToolButton;
+    m_pause->setDisabled(true);
     m_play->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
 	m_stop->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
     m_prevSong->setIcon(style()->standardIcon(QStyle::SP_MediaSkipBackward));
     m_nextSong->setIcon(style()->standardIcon(QStyle::SP_MediaSkipForward));
 	m_pause->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
-    //m_unfilter->setIcon(style()->standardIcon(QStyle::SP_BrowserReload));
 
     m_repeat = new QToolButton;
     m_repeat->setCheckable(true);
@@ -435,6 +450,15 @@ MainWindow::createLayouts()
     m_checkboxSelect->setCheckable(true);
     m_checkboxSelect->setChecked(true);
     m_checkboxSelect->setDisabled(true);
+
+    m_searchbox = new QLineEdit;
+    m_searchbox->setPlaceholderText("Search (3 char min)");
+    m_searchbox->setEnabled(false);
+
+    m_search = new QToolButton;
+    m_search->setEnabled(false);
+    m_search->setIcon(QIcon(":/Resources/Search.png"));
+    m_search->setIconSize(QSize(16.5,16.5));
 	
     m_repeat->setIcon(QIcon(":/Resources/Repeat.png"));
     m_repeat->setIconSize(QSize(16.5,16.5));
@@ -449,16 +473,21 @@ MainWindow::createLayouts()
 	
     m_imageLabel = new QLabel;
     m_imageLabel ->setText("No Art");
+    m_imageLabel->setAlignment(Qt::AlignCenter);
+    m_imageLabel->setFixedSize(90,90);
+    m_imageLabel->setStyleSheet("QLabel{border: 1px solid #BBB}");
     m_volumeSlider = new QSlider(Qt::Horizontal, buttonwidget);
     m_volumeSlider->setRange(0, 100);
-    m_volumeSlider->setSliderPosition(80);
-    m_volumeSlider->setMinimumWidth(50);
+    m_volumeSlider->setValue(80);
+    m_volumeSlider->setDisabled(true);
+    m_volumeSlider->setFixedWidth(120);
 	m_timeLabel = new QLabel;
-    m_timeLabel ->setText("<b>00:00 / 00:00</b>");
+    m_timeLabel->setText("<b>0:00 / 0:00</b>");
     m_timeSlider = new QSlider(Qt::Horizontal);
     m_timeSlider ->setParent(this);
-    m_timeSlider ->setRange(0, 0);
-    m_timeSlider->setMaximumWidth(400);
+    m_timeSlider ->setDisabled(true);
+    m_timeSlider ->setFixedWidth(500);
+
     m_buttonLayout ->addWidget(m_volumeSlider);
     m_buttonLayout ->addWidget(m_loadArt);
     m_buttonLayout ->addWidget(m_prevSong);
@@ -469,22 +498,23 @@ MainWindow::createLayouts()
     m_buttonLayout ->addWidget(m_repeat);
     m_buttonLayout ->addWidget(m_shuffle);
     m_buttonLayout ->addWidget(m_checkboxSelect);
-    m_buttonLayout ->addWidget(m_timeLabel);
+    m_buttonLayout ->addWidget(m_searchbox);
+    m_buttonLayout ->addWidget(m_search);
+
+    m_buttonLayout->setMargin(0);
     buttonwidget ->setLayout(m_buttonLayout);
     buttonwidget ->setMaximumHeight(50);
     buttonwidget ->setMaximumWidth(600);
-    m_timeSlider->setMinimumWidth(320);
-    m_timeSlider->setStyleSheet("QSlider::groove:horizontal  {border: 4px solid #999999;"
-                                "background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #BABABA, stop:1 #FFFFFF);}"
-                                "QSlider::handle:horizontal  {background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #999999, stop:1 #CCCCCC);"
-                                "width: 10px;"
-                                "height: 20px;"
-                                "margin-top: -6px;"
-                                "margin-bottom: -6px;}"
-                                "QSlider::add-page:horizontal {background: white;"
-                                "border: 1px solid #999999}"
-                                "QSlider::sub-page:horizontal  {background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #66FF33, stop:1 #009933);}");
-	
+
+    m_sliderLayout = new QHBoxLayout;
+    m_sliderLayout ->addWidget(m_timeSlider);
+    m_sliderLayout ->addWidget(m_timeLabel);
+    m_sliderLayout->setMargin(0);
+    sliderwidget ->setLayout(m_sliderLayout);
+    sliderwidget ->setMaximumHeight(50);
+    sliderwidget ->setMinimumWidth(600);
+    s_setSliderColor("#009900","#33CC33","#00FF00");
+
     widget->setMaximumHeight(m_squares->height()*1.25);
     m_imageLabel ->setMaximumWidth(100);
     m_imageLabel ->setMaximumHeight(100);
@@ -497,7 +527,8 @@ MainWindow::createLayouts()
 
     QVBoxLayout* musicWidgetLayout = new QVBoxLayout;
     musicWidgetLayout ->addWidget(buttonwidget,Qt::AlignCenter);
-    musicWidgetLayout ->addWidget(m_timeSlider,Qt::AlignCenter);
+    musicWidgetLayout ->addWidget(sliderwidget,Qt::AlignCenter);
+    //musicWidgetLayout ->addWidget(m_timeSlider,Qt::AlignCenter);
     m_musicWidgets->setLayout(musicWidgetLayout);
 
     m_tabs = new QTabWidget;
@@ -585,10 +616,8 @@ MainWindow::initLists()
 	}
 
     for(int i = 0; i < m_table->rowCount(); i++) {
-          QTableWidgetItem *playlistItem = new QTableWidgetItem;
           QCheckBox* p_checkbox = new QCheckBox;
           QWidget* p_widget = new QWidget;
-          p_checkbox->setChecked(true);
 
           QHBoxLayout* p_layout = new QHBoxLayout(p_widget);
           p_layout->addWidget(p_checkbox);
@@ -597,14 +626,34 @@ MainWindow::initLists()
 
           m_table->item(i,0)->setText("");
           m_table->setCellWidget(i,0,p_widget);
-
-          m_playlistTable->insertRow(i);
-          m_playlistTable->setItem(i,0,playlistItem);
-          playlistItem->setText(m_table->item(i,1)->text());
     }
-    m_repeat->setEnabled(true);
-    m_shuffle->setEnabled(true);
-    m_checkboxSelect->setEnabled(true);
+
+    // Selects checkbox whose song is in playlist
+    if(m_playlistTable->rowCount() == 0){
+        for(int i = 0; i < m_table->rowCount(); i++){
+            QTableWidgetItem *playlistItem = new QTableWidgetItem;
+            m_playlistTable->insertRow(i);
+            m_playlistTable->setItem(i,0,playlistItem);
+            playlistItem->setText(m_table->item(i,1)->text());
+        }
+        m_repeat->setEnabled(true);
+        m_shuffle->setEnabled(true);
+        m_checkboxSelect->setEnabled(true);
+        m_searchbox->setEnabled(true);
+        m_search->setEnabled(true);
+    }
+
+    for(int i = 0; i < m_playlistTable->rowCount(); i++)
+    {
+        for(int j = 0; j < m_table->rowCount(); j++)
+        {
+            m_checkbox = m_table->cellWidget(j,0)->findChild<QCheckBox *>();
+            if(m_playlistTable->item(i,0)->text() == m_table->item(j,1)->text())
+            {
+                m_checkbox->setChecked(true);
+            }
+        }
+    }
 }
 
 
@@ -617,8 +666,8 @@ MainWindow::initLists()
 void
 MainWindow::redrawLists(QListWidgetItem *listItem, int x)
 {
-	m_table->setRowCount(0);
-    m_playlistTable->setRowCount(0);
+    if(isSearch == false)
+        m_table->setRowCount(0);
 	// copy data to table widget
 	for(int i=0,row=0; i<m_listSongs.size(); i++) {
 		// skip rows whose field doesn't match text
@@ -639,10 +688,8 @@ MainWindow::redrawLists(QListWidgetItem *listItem, int x)
 	}
 
     for(int i = 0; i < m_table->rowCount(); i++) {
-          QTableWidgetItem *playlistItem = new QTableWidgetItem;
-          QCheckBox *p_checkbox = new QCheckBox;
-          QWidget* p_widget = new QWidget;
-          p_checkbox->setChecked(true);
+        QCheckBox *p_checkbox = new QCheckBox;
+        QWidget* p_widget = new QWidget;
 
           QHBoxLayout* p_layout = new QHBoxLayout(p_widget);
           p_layout->addWidget(p_checkbox);
@@ -651,15 +698,23 @@ MainWindow::redrawLists(QListWidgetItem *listItem, int x)
 
           m_table->item(i,0)->setText("");
           m_table->setCellWidget(i,0,p_widget);
+    }
 
-          m_playlistTable->insertRow(i);
-          playlistItem->setText(m_table->item(i,1)->text());
-          m_playlistTable->setItem(i,0,playlistItem);
+    for(int i = 0; i < m_playlistTable->rowCount(); i++)
+    {
+        for(int j = 0; j < m_table->rowCount(); j++)
+        {
+            m_checkbox = m_table->cellWidget(j,0)->findChild<QCheckBox *>();
+            if(m_playlistTable->item(i,0)->text() == m_table->item(j,1)->text())
+            {
+                m_checkbox->setChecked(true);
+            }
+        }
     }
 }
 void
 MainWindow::s_redrawAlbum(QString albumname){
-    m_table->setRowCount(0);
+    //m_table->setRowCount(0);
     m_playlistTable->setRowCount(0);
     for(int i = 0, row = 0; i < m_listSongs.size(); i++){
         if(m_listSongs[i][ALBUM] != albumname) continue;
@@ -675,7 +730,6 @@ MainWindow::s_redrawAlbum(QString albumname){
         row++;
     }
     for(int i = 0; i < m_table->rowCount(); i++) {
-          QTableWidgetItem *playlistItem = new QTableWidgetItem;
           QCheckBox *p_checkbox = new QCheckBox;
           QWidget* p_widget = new QWidget;
           p_checkbox->setChecked(true);
@@ -687,10 +741,6 @@ MainWindow::s_redrawAlbum(QString albumname){
 
           m_table->item(i,0)->setText("");
           m_table->setCellWidget(i,0,p_widget);
-
-          m_playlistTable->insertRow(i);
-          playlistItem->setText(m_table->item(i,1)->text());
-          m_playlistTable->setItem(i,0,playlistItem);
     }
 }
 
@@ -702,7 +752,6 @@ MainWindow::s_redrawAlbum(QString albumname){
 void
 MainWindow::traverseDirs(QString path)
 {
-	QString		key, val;
 	QStringList	list;
 
 	// init listDirs with subdirectories of path
@@ -718,7 +767,6 @@ MainWindow::traverseDirs(QString path)
 
 	QString prev_album = "", current_album = "";
 	int albumcount = 0;
-	bool newart;
 	for(int i=0; i < listFiles.size(); i++) {
 
 		// init list with default values: ""
@@ -728,10 +776,11 @@ MainWindow::traverseDirs(QString path)
 		// store file pathname into 0th position in list
 		QFileInfo fileInfo = listFiles.at(i);
 		list.replace(PATH, fileInfo.filePath());
+        if(m_fullPathList->contains(fileInfo.filePath())) continue;
+        m_fullPathList->append(fileInfo.filePath());
 		
 		// creates variable source of FileRef class
 		TagLib::FileRef source(QFile::encodeName(fileInfo.filePath()).constData());
-		newart = false;
 		if(!source.isNull() && source.tag()) {
 			// creates a Tag variable in order to read the tags of source
 			TagLib::Tag *tag = source.tag();
@@ -746,12 +795,13 @@ MainWindow::traverseDirs(QString path)
 				current_album = TStringToQString(tag->album());
 				if(prev_album != current_album){
 					albumcount+=1;
-					newart = true;
                     m_albumList->append(TStringToQString(tag->album()));
+                    m_pathList->append(fileInfo.filePath());
+                    //qDebug() << fileInfo.filePath();
 				}
-				else newart = false;
 				QString tempalbum = QString("%1").arg(albumcount);
-				list.replace(ALBUMID,tempalbum);
+
+                //list.replace(ALBUMID,tempalbum);
 			}
 			prev_album = TStringToQString(tag->album());
             if(tag->title() != "")
@@ -786,15 +836,8 @@ MainWindow::traverseDirs(QString path)
 
 		// append list (song data) into songlist m_listSongs;
 		// uninitialized fields are empty strings
-		m_listSongs << list;
-		
-		if(newart){
-			TagLib::MPEG::File audioFile(QFile::encodeName(fileInfo.filePath()).constData());
-			TagLib::ID3v2::Tag *tag = audioFile.ID3v2Tag();
-			QImage coverArt = imageForTag(tag);
-			m_tdResizedArt = coverArt.scaled(250,250,Qt::KeepAspectRatio);
-			m_artlist->append(m_tdResizedArt);
-		}
+        //if(!m_listSongs.contains(list)) m_listSongs << list;
+        m_listSongs << list;
 	}
 	
 	// recursively descend through all subdirectories
@@ -827,26 +870,20 @@ MainWindow::s_load()
 	// copy full pathname of selected directory into m_directory
 	m_directory = s;
 
-	// init progress bar
-    //m_progressBar = new QProgressDialog(this);
-    //m_progressBar->setWindowTitle("Updating");
-    //m_progressBar->setFixedSize(300,100);
-    //m_progressBar->setCancelButtonText("Cancel");
-
     //m_listSongs.clear();
     m_table->setRowCount(0);
     m_playlistTable->setRowCount(0);
     m_panel[0]->clear();
     m_panel[1]->clear();
     m_panel[2]->clear();
-    m_artlist->clear();
+    //m_artlist->clear();
+    m_pathList->clear();
     m_albumList->clear();
     m_mediaplayer->stop();
     traverseDirs(m_directory);
 	initLists();
-    if(m_artlist->size() != 0 && m_albumList->size() != 0)
-        emit s_artLoaded(m_artlist,m_albumList);
-    //m_progressBar->close();
+    if(m_pathList->size() != 0 || m_albumList->size() != 0)
+        emit s_artLoaded(m_pathList,m_albumList);
 }
 
 
@@ -864,7 +901,6 @@ MainWindow::s_panel1(QListWidgetItem *item)
         m_panel[1]->clear();
         m_panel[2]->clear();
         m_table->setRowCount(0);
-        m_playlistTable->setRowCount(0);
 		initLists();
 		return;
 	}
@@ -1091,8 +1127,8 @@ void MainWindow::s_updateLabel(qint64 Time){
     else endTime = QString("%1:%2").arg(endMinute).arg(endSecond);
 
     //Get the current time of the currently playing song in minutes and seconds
-    int currentSecond = ((int)m_mediaplayer->position() / 1000)%60;
-    int currentMinute = ((int)m_mediaplayer->position() / 1000)/60;
+    int currentSecond = ((int)Time / 1000)%60;
+    int currentMinute = ((int)Time / 1000)/60;
     QString currentTime;
     //Same as above
     if(currentSecond < 10)
@@ -1142,15 +1178,57 @@ void MainWindow::s_setDuration(qint64 Duration){
     return;
 }
 
+void MainWindow::s_searchSongs(){
+    //Intialize variables
+    QList<QString> m_listFound;
+    m_listFound.clear();
+    QString inputstr = m_searchbox->text();
+
+    //If there is no text in the searchbox, simply return the unfiltered m_table
+    if(inputstr == ""){
+        m_table->setRowCount(0);
+        initLists();
+        return;
+    }
+    //If the length of input is less than 3, return. This is to prevent the program
+    //from stalling on very large directories.
+    else if(inputstr.size() < 3){
+        return;
+    }
+
+    //If there is a title in m_listSongs that contains the input str, append it to the list
+    //of found items
+    for(int i=0; i<m_listSongs.size(); i++){
+        if(m_listSongs[i][TITLE].contains(inputstr, Qt::CaseInsensitive)){
+            m_listFound.append(m_listSongs[i][TITLE]);
+        }
+    }
+
+    //Turn the QList<QString> of found titles to a QListWidget for redrawLists()
+    //The bool allows for a certain lines of code within redrawLists() to be
+    //temporarily disabled
+    QListWidget foundsongs;
+    foundsongs.addItems(m_listFound);
+    isSearch = true;
+
+    //We first clear the table, then we add each of found songs to m_table
+    m_table->setRowCount(0);
+    for(int i = foundsongs.count() - 1; i >= 0; i--){
+        //qDebug() << m_listFound[i];
+        redrawLists(foundsongs.item(i), TITLE);
+    }
+    isSearch = false;
+}
+
 void MainWindow::s_toggleNightMode(){
     if(m_nightmodeAction->isChecked()){
         m_tabs->setStyleSheet("background: black; \
                           ");
-        m_volumeSlider->setStyleSheet("QSlider::groove:horizonal{background-color: #444444; \
+        m_volumeSlider->setStyleSheet("QSlider::groove:horizonal{background-color: #444; \
             height: 5px; \
             border: 1px solid grey;} \
             QSlider::handle:horizonal{background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
-            stop:0 #555555, stop:1 #777777); \
+            stop:0 #555, stop:1 #777); \
             border: 1px solid grey; \
             width: 5px; \
             margin: -5px;} \
@@ -1162,52 +1240,57 @@ void MainWindow::s_toggleNightMode(){
             ");
         this->setStyleSheet("MainWindow{background-color: black; \
             color: white;} \
-            QMenu{background: #444444; \
+            QMenu{background: #444; \
             color: white;} \
-            QMenuBar{background: #444444; \
+            QMenuBar{background: #444; \
             color: white;} \
-            QMenuBar::item{background-color: #444444;} \
-            QMenuBar::item:selected{background-color: #666666;} \
+            QMenuBar::item{background-color: #444;} \
+            QMenuBar::item:selected{background-color: #666;} \
             QScrollBar:vertical{background-color: black;} \
-            QTabBar::tab{background-color: #444444; \
+            QTabBar::tab{background-color: #444; \
             color: white;} \
-            QTabBar::tab:selected{background-color: #666666;} \
-            QTabWidget::pane{border: 2px solid #444444} \
+            QTabBar::tab:selected{background-color: #666;} \
+            QTabWidget::pane{border: 2px solid #444} \
             QSplitter::handle{background-color: black;} \
             QLineEdit{background-color: black; \
             color: white; \
-            border: 2px solid #444444;} \
-            QTableView{background-color: #333333; \
-            alternate-background-color: #555555; \
+            border: 2px solid #444; \
+            border-radius: 2px;} \
+            QTableView{background-color: #333; \
+            alternate-background-color: #222; \
             color: white;} \
-            QTableCornerButton::section{background-color: #444444; \
+            QTableCornerButton::section{background-color: #444; \
             border: 2px;} \
-            QHeaderView::section{background-color: #444444; \
+            QHeaderView::section{background-color: #444; \
             color: white;} \
             QLabel{color: white;} \
             QListWidget{color: white} \
             QToolButton{background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
-            stop:0 #444444, stop:1 #666666); \
+            stop:0 #444, stop:1 #666); \
             color: white; \
-            border: none;} \
+            border: 2px solid #444; \
+            border-radius: 2px;} \
             QToolButton::pressed{background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
-            stop:0 #AAAAAA, stop:1 #CCCCCC); \
+            stop:0 #AAA, stop:1 #CCC); \
             color: white; \
-            border: 2px solid white;} \
+            border: 2px solid white; \
+            border-radius: 2px;} \
             QToolButton::hover{background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
-            stop:0 #999999, stop:1 #BBBBBB);} \
+            stop:0 #999, stop:1 #BBB); \
+            color: white; \
+            border: 2px solid #444; \
+            border-radius: 2px;} \
             QCheckBox{background: black;} \
             ");
         m_timeSlider->setStyleSheet(m_timeSlider->styleSheet() + ts_styleSheet);
-        m_imageLabel->setStyleSheet("QLabel{border: 2px solid #444444;\
-            color: white;}");
-
+        m_imageLabel->setStyleSheet("QLabel{border: 1px solid #444;\
+                                    color: white;}");
     }
     else{
     m_tabs->setStyleSheet("");
     m_volumeSlider->setStyleSheet("");
     this->setStyleSheet("");
-    m_imageLabel->setStyleSheet("");
+    m_imageLabel->setStyleSheet("QLabel{border: 1px solid #BBB}");
     m_timeSlider->setStyleSheet(m_timeSlider->styleSheet() + "QSlider::add-page:horizontal { \
         background: #fff; \
         border: 1px solid #777; \
@@ -1232,8 +1315,97 @@ void MainWindow::s_toggleNightMode(){
     }
 }
 
+void MainWindow::s_cycleSliderColor(){
+
+    // Cycles through the time slider's color in the following order:
+    // Red->Orange->Yellow->Green->Blue->Indigo->Pink then back to Red
+    if(colorval > 6)
+        colorval = 0;
+
+     switch(colorval){
+     case 0:
+         s_setSliderColor("#990000", "#CC0000", "#FF0000");
+         break;
+     case 1:
+         s_setSliderColor("#E68A00", "#FF9900", "#FFA319");
+         break;
+     case 2:
+         s_setSliderColor("#CCCC00", "#E6E600", "#FFFF00");
+         break;
+     case 3:
+         s_setSliderColor("#009900","#33CC33","#00FF00");
+         break;
+     case 4:
+         s_setSliderColor("#0099FF","#33CCFF","#0000FF");
+         break;
+     case 5:
+         s_setSliderColor("#4B0082", "#6800B5", "#7700FF");
+         break;
+     case 6:
+         s_setSliderColor("#990099","#CC00CC","#FF00FF");
+         break;
+     }
+     colorval++;
+
+     if(m_nightmodeAction->isChecked())
+         m_timeSlider->setStyleSheet(m_timeSlider->styleSheet() + ts_styleSheet);
+}
+
+void MainWindow::s_setSliderColor(QString a, QString b, QString c){
+
+    m_timeSlider->setStyleSheet(QString("QSlider::groove:horizontal { \
+        border: 1px solid #bbb; \
+        background: white; \
+        height: 10px; \
+        border-radius: 4px;\
+        }\
+        QSlider::sub-page:horizontal { \
+        background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1, \
+            stop: 0 %1, stop: 1 %2); \
+        background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1, \
+            stop: 0 %2, stop: 1 %3); \
+        border: 1px solid #777; \
+        height: 10px; \
+        border-radius: 4px; \
+        }\
+        QSlider::add-page:horizontal { \
+        background: #fff; \
+        border: 1px solid #777; \
+        height: 10px; \
+        border-radius: 4px; \
+        }\
+        QSlider::handle:horizontal { \
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+            stop:0 #eee, stop:1 #ccc); \
+        border: 1px solid #777; \
+        width: 13px; \
+        margin-top: -2px; \
+        margin-bottom: -2px; \
+        border-radius: 4px; \
+        } \
+        QSlider::handle:horizontal:hover { \
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:1, \
+            stop:0 #fff, stop:1 #ddd); \
+        border: 1px solid #444; \
+        border-radius: 4px; \
+        } \
+        QSlider::sub-page:horizontal:disabled { \
+        background: #bbb; \
+        border-color: #999; \
+        } \
+        QSlider::add-page:horizontal:disabled { \
+        background: #eee; \
+        border-color: #999; \
+        } \
+        QSlider::handle:horizontal:disabled { \
+        background: #eee; \
+        border: 1px solid #aaa; \
+        border-radius: 4px; \
+        }").arg(a,b,c));
+}
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::taglibAlbumArt
+// MainWindow::imageForTag
 //
 // Obtain the cover art for a given track using taglib.
 //
@@ -1243,18 +1415,18 @@ QImage MainWindow::imageForTag(TagLib::ID3v2::Tag *tag)
     //Creates a framelist from the given tag using "APIC",
     //Which stands for "attached picture"
     const TagLib::ID3v2::FrameList list = tag->frameList("APIC");
-    //If the list is empty, then load a default art image from QResource
-    if(list.isEmpty()){
-        //image.load("/Users/matt/Desktop/csc221/qtunes/cover.png");
-        image.load(":/Resources/Default.ico");
-        return image;
-	}
-    //It isn't empty, so get the attached picture frame from the framelist
+
     //front() specifies the cover art of the song
     TagLib::ID3v2::AttachedPictureFrame *frame =
         static_cast<TagLib::ID3v2::AttachedPictureFrame *>(list.front());
     //Load the picture from the song's frame into the Qimage, and return it
     image.loadFromData((const uchar *) frame->picture().data(), frame->picture().size());
+    //If nothing is loaded and the image is Null, we return the default album art
+    //since loading a null image can cause QTunes to crash.
+    if(image.isNull() || list.isEmpty()){
+        image.load(":/Resources/Default.png");
+        return image;
+    }
     return image;
 }
 
@@ -1270,7 +1442,7 @@ MainWindow::s_play(QTableWidgetItem *item)
 {
     if(item == NULL)
         return;
-    if(m_mediaplayer->state() == 2){
+    if(m_mediaplayer->state() == 2 && item->row() == m_prevItem->row()){
         m_mediaplayer->play();
         return;
     }
@@ -1293,21 +1465,27 @@ MainWindow::s_play(QTableWidgetItem *item)
         m_imageLabel->setScaledContents(true);
         //Puts the resized image into the image label
         m_imageLabel->setPixmap(QPixmap::fromImage(m_resizedArt));
-		if(m_stop->isDown()){
-			m_mediaplayer->stop();
-		}
+        m_prevItem = item;
 		return;
 	}
 }
 void MainWindow::statusChanged(QMediaPlayer::MediaStatus status)
 {
     if(status == QMediaPlayer::BufferedMedia){
-        //Sets the window title to be the in the following format:
-        //<Artist> - <Title>
-        QString QTunes = " - ";
-        QTunes.prepend(m_table->item(m_table->currentRow(),4)->text());
-        QTunes.append(m_table->item(m_table->currentRow(),1)->text());
-        setWindowTitle(QTunes);
+            qDebug("Media is buffered");
+            m_timeSlider->setEnabled(true);
+            m_volumeSlider->setEnabled(true);
+            m_play->setEnabled(true);
+            m_stop->setEnabled(true);
+            m_prevSong->setEnabled(true);
+            m_nextSong->setEnabled(true);
+            m_pause->setEnabled(true);
+            //Sets the window title to be the in the following format:
+            //<Artist> - <Title>
+            QString QTunes = " - ";
+            QTunes.prepend(m_table->item(m_table->currentRow(),4)->text());
+            QTunes.append(m_table->item(m_table->currentRow(),1)->text());
+            setWindowTitle(QTunes);
     }
 
     if(status == QMediaPlayer::EndOfMedia && m_playlistTable->rowCount() == 0)
@@ -1340,6 +1518,7 @@ void MainWindow::statusChanged(QMediaPlayer::MediaStatus status)
         m_playlistTable->setCurrentItem(nextItem);
         s_play(m_table->currentItem());
     }
+    m_mediaplayer->play();
 }
 
 void MainWindow::s_repeat()
@@ -1495,6 +1674,15 @@ void MainWindow::s_playlistUpdate()
          {
             m_playlistTable->insertRow(0);
             m_playlistTable->setItem(0,0,playlistItem);
+
+            if(m_repeat->isEnabled() == false || m_shuffle->isEnabled() == false)
+            {
+                m_repeat->setEnabled(true);
+                m_shuffle->setEnabled(true);
+            }
+
+            if(m_playlistTable->rowCount() == m_table->rowCount())
+                m_checkboxSelect->setChecked(true);
          }
          else
          {
@@ -1503,6 +1691,11 @@ void MainWindow::s_playlistUpdate()
                  if(m_table->item(m_table->currentRow(),1)->text() == m_playlistTable->item(i,0)->text())
                  {
                      m_playlistTable->removeRow(i);
+                 }
+
+                 if(m_playlistTable->rowCount() == 0)
+                 {
+                     m_checkboxSelect->setChecked(false);
                  }
             }
          }

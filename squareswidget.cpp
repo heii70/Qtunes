@@ -2,6 +2,15 @@
 #include <glu.h>
 #include <QtWidgets>
 #include <QGLWidget>
+#include <fileref.h>
+#include <tag.h>
+#include <tpropertymap.h>
+#include <tbytevector.h>
+#include <id3v2tag.h>
+#include <mpegfile.h>
+#include <id3v2frame.h>
+#include <id3v2header.h>
+#include <attachedpictureframe.h>
 
 /* SquaresWidget constructor that sets the default values of several
  * variables and initializes the QLists used in this widget. It also
@@ -65,6 +74,46 @@ void SquaresWidget::shiftRight(){
     m_translate -= m_shift;
 }
 
+/* imageForTag(TagLib::ID3v2::Tag *tag) is identical to the function
+* in MainWindow.cpp. It takes in an ID3v2 tag and returns a QImage
+* containing the tag's album art. If the list is empty, or the image
+* is null by the end of the function, it will instead return a default
+* image from QResource.
+* */
+
+QImage SquaresWidget::imageForTag(TagLib::ID3v2::Tag *tag){
+    if(tag == NULL) qDebug() << "tag is null";
+    //qDebug() << "Start of imageForTag";
+    //qDebug() << "tag title is " << TStringToQString(tag->title());
+
+    QImage image;
+    //Creates a framelist from the given tag using "APIC",
+    //Which stands for "attached picture"
+    const TagLib::ID3v2::FrameList list = tag->frameList("APIC");
+    //qDebug() << "framelist created";
+
+    if(list.isEmpty()){
+        image.load(":/Resources/Default.png");
+        return image;
+    }
+
+    //front() specifies the cover art of the song
+    TagLib::ID3v2::AttachedPictureFrame *frame =
+        static_cast<TagLib::ID3v2::AttachedPictureFrame *>(list.front());
+    //qDebug() << "frame created";
+    if(frame == NULL) qDebug() << "frame is null";
+    //Load the picture from the song's frame into the Qimage, and return it
+    image.loadFromData((const uchar *) frame->picture().data(), frame->picture().size());
+    //qDebug() << "image loaded from data";
+
+    /*if(image.isNull() || list.isEmpty()){
+        image.load(":/Resources/Default.png");
+        return image;
+    }*/
+
+    return image;
+}
+
 /* s_MP3Art is a slot function that is connected to a signal from MainWindow that
  * is emitted when the s_load function is called. It takes in a QList of
  * QImages that is passed to it by MainWindow and appends to a QList of QImages,
@@ -72,20 +121,35 @@ void SquaresWidget::shiftRight(){
  * from. This function also takes in a QList of QStrings that is used to save the
  * name of the QImages that have been passed to this function.
  * */
-void SquaresWidget::s_MP3Art(QList<QImage> *artlist, QList<QString> *albumlist){
-    if(artlist->size() == 0 || albumlist->size() == 0) return;
+void SquaresWidget::s_MP3Art(QList<QString> *listSongs, QList<QString> *albumlist){
+    //qDebug() << "Start of s_MP3Art";
+    if(listSongs->size() == 0 && albumlist->size() == 0) return;
+    //qDebug() << "Size of listSongs = " << listSongs->size();
+    //qDebug() << "Size of albumlist = " << albumlist->size();
     const QList<QString> *temp_list(albumlist);
     m_albumList->append(*temp_list);
     m_fromMP3 = true;
     m_recordsLoaded = true;
-    m_numAlbums += artlist->size();
+    //m_numAlbums += artlist->size();
+    m_numAlbums += listSongs->size();
+    //qDebug() << "m_numAlbums = " << m_numAlbums;
 
     /* This for loop essentially converts the QImages passed to the function into
      * GLuints that OpenGL can used to display these images in the coverflow.
     */
 	glEnable(GL_TEXTURE_2D);
-    for(int i=0; i < artlist->size(); i++) {
-		QString temp_string = QString("record %1").arg(i+1);
+    for(int i=0; i < listSongs->size(); i++) {
+        QByteArray ba_temp = listSongs->at(i).toLocal8Bit();
+        const char* filepath = ba_temp.data();
+        TagLib::MPEG::File audioFile(filepath);
+        //qDebug() << "audioFile created";
+        TagLib::ID3v2::Tag *tag = audioFile.ID3v2Tag(true);
+        //qDebug() << "tag created";
+        QImage coverArt = imageForTag(tag);
+        QImage ResizedArt = coverArt.scaled(250,250,Qt::KeepAspectRatio);
+        //qDebug() << "ResizedArt created";
+
+        //QString temp_string = QString("record %1").arg(i+1);
         GLuint tempGLu;
         glGenTextures(1, &tempGLu);
         glBindTexture(GL_TEXTURE_2D, tempGLu);
@@ -93,7 +157,7 @@ void SquaresWidget::s_MP3Art(QList<QImage> *artlist, QList<QString> *albumlist){
 	    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
-		QImage image_gl = QGLWidget::convertToGLFormat(artlist->at(i));
+        QImage image_gl = QGLWidget::convertToGLFormat(ResizedArt);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_gl.width(),
             image_gl.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, image_gl.bits());
         m_glTexID->append(tempGLu);

@@ -1389,7 +1389,8 @@ void MainWindow::s_searchSongs(){
 // Will toggle between night mode and normal mode for QTunes
 //
 void MainWindow::s_toggleNightMode(){
-    // ***NEED COMMENT
+    // If the nightmode action is checked, set the stylesheet of the widgets
+    // in MainWindow to a black or dark gray color.
     if(m_nightmodeAction->isChecked()){
         m_tabs->setStyleSheet("background: black; \
                           ");
@@ -1455,6 +1456,9 @@ void MainWindow::s_toggleNightMode(){
         m_imageLabel->setStyleSheet("QLabel{border: 1px solid #444;\
                                     color: white;}");
     }
+    // If nightmode is untoggled, this resets the stylesheet to the default by replacing the
+    // stylesheet QString with nothing (""). The time slider, however, is changed to white so
+    // that it retains its appearance (and the slider color).
     else{
     m_tabs->setStyleSheet("");
     m_volumeSlider->setStyleSheet("");
@@ -1528,10 +1532,13 @@ void MainWindow::s_cycleSliderColor(){
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::s_setSliderColor:
 //
-// ***NEED COMMENT
+// This function sets both the appearance of the time slider as well as the color of the slider's
+// progress. It replaces QString arguments %1, %2, and %3 with hex code color arguments given by
+// QString a, b, and c, respectively.
 //
 void MainWindow::s_setSliderColor(QString a, QString b, QString c){
-    // ***NEED COMMENT
+    // Sets the stylesheet appearance as well as the color of the slider's progress via
+    // the color code values passed to it.
     m_timeSlider->setStyleSheet(QString("QSlider::groove:horizontal { \
         border: 1px solid #bbb; \
         background: white; \
@@ -1722,6 +1729,12 @@ void MainWindow::statusChanged(QMediaPlayer::MediaStatus status)
         m_playlistTable->setCurrentItem(nextItem);
         s_play(m_table->currentItem());
     }
+    // The following code creates a singleshot qtimer within a loop that will cause the loop to exit
+    // after 1 ms. This is used in order to fix a specific problem with Direct Show Player that causes
+    // certain songs to be unplayable in Windows.
+    QEventLoop loop;
+    QTimer::singleShot(1, &loop, SLOT(quit()));
+    loop.exec();
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -12,7 +12,8 @@
 #include <id3v2header.h>
 #include <attachedpictureframe.h>
 
-/* SquaresWidget constructor that sets the default values of several
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * SquaresWidget constructor that sets the default values of several
  * variables and initializes the QLists used in this widget. It also
  * initializes a QTimer and connects it such that it will call the slot
  * function update() every 16ms. update() will call updateGL(), which will
@@ -46,11 +47,13 @@ SquaresWidget::SquaresWidget(){
     connect(m_timer, SIGNAL(timeout()), this, SLOT(update()));
 }
 
-/* SquaresWidget deconstructor*/
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * SquaresWidget deconstructor*/
 SquaresWidget::~SquaresWidget(){
 }
 
-/* shiftLeft() is a function that increments m_translate by m_shift. This
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * shiftLeft() is a function that increments m_translate by m_shift. This
  * function is called when the mousePressEvent function determines that there
  * is a mouse click on the left side of the widget (this wil be similar to
  * clicking on an album to the left of the center widget). If the coverflow is
@@ -62,7 +65,8 @@ void SquaresWidget::shiftLeft(){
 	m_translate += m_shift;
 }
 
-/* shiftRight() is a function that decrements m_translate by m_shift. This
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * shiftRight() is a function that decrements m_translate by m_shift. This
  * function is called when the mousePressEvent function determines that there
  * is a mouse click on the right side of the widget (this wil be similar to
  * clicking on an album to the right of the center widget). If the coverflow is
@@ -74,24 +78,20 @@ void SquaresWidget::shiftRight(){
     m_translate -= m_shift;
 }
 
-/* imageForTag(TagLib::ID3v2::Tag *tag) is identical to the function
-* in MainWindow.cpp. It takes in an ID3v2 tag and returns a QImage
-* containing the tag's album art. If the list is empty, or the image
-* is null by the end of the function, it will instead return a default
-* image from QResource.
-* */
-
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * imageForTag(TagLib::ID3v2::Tag *tag) is identical to the function
+ * in MainWindow.cpp. It takes in an ID3v2 tag and returns a QImage
+ * containing the tag's album art. If the list is empty, or the image
+ * is null by the end of the function, it will instead return a default
+ * image from QResource.
+ */
 QImage SquaresWidget::imageForTag(TagLib::ID3v2::Tag *tag){
-    if(tag == NULL) qDebug() << "tag is null";
-    //qDebug() << "Start of imageForTag";
-    //qDebug() << "tag title is " << TStringToQString(tag->title());
-
     QImage image;
     //Creates a framelist from the given tag using "APIC",
     //Which stands for "attached picture"
     const TagLib::ID3v2::FrameList list = tag->frameList("APIC");
-    //qDebug() << "framelist created";
 
+    // Returns a default album art if list is empty
     if(list.isEmpty()){
         image.load(":/Resources/Default.png");
         return image;
@@ -100,21 +100,19 @@ QImage SquaresWidget::imageForTag(TagLib::ID3v2::Tag *tag){
     //front() specifies the cover art of the song
     TagLib::ID3v2::AttachedPictureFrame *frame =
         static_cast<TagLib::ID3v2::AttachedPictureFrame *>(list.front());
-    //qDebug() << "frame created";
-    if(frame == NULL) qDebug() << "frame is null";
     //Load the picture from the song's frame into the Qimage, and return it
     image.loadFromData((const uchar *) frame->picture().data(), frame->picture().size());
-    //qDebug() << "image loaded from data";
-
-    /*if(image.isNull() || list.isEmpty()){
+    //If nothing is loaded and the image is Null, we return the default album art
+    //since loading a null image can cause QTunes to crash.
+    if(image.isNull()){
         image.load(":/Resources/Default.png");
         return image;
-    }*/
-
+    }
     return image;
 }
 
-/* s_MP3Art is a slot function that is connected to a signal from MainWindow that
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * s_MP3Art is a slot function that is connected to a signal from MainWindow that
  * is emitted when the s_load function is called. It takes in a QList of
  * QImages that is passed to it by MainWindow and appends to a QList of QImages,
  * m_glTexID. m_glTexID contains GLuints that can be used to create the coverflow
@@ -122,17 +120,14 @@ QImage SquaresWidget::imageForTag(TagLib::ID3v2::Tag *tag){
  * name of the QImages that have been passed to this function.
  * */
 void SquaresWidget::s_MP3Art(QList<QString> *listSongs, QList<QString> *albumlist){
-    //qDebug() << "Start of s_MP3Art";
     if(listSongs->size() == 0 && albumlist->size() == 0) return;
-    //qDebug() << "Size of listSongs = " << listSongs->size();
-    //qDebug() << "Size of albumlist = " << albumlist->size();
     const QList<QString> *temp_list(albumlist);
     m_albumList->append(*temp_list);
     m_fromMP3 = true;
     m_recordsLoaded = true;
-    //m_numAlbums += artlist->size();
     m_numAlbums += listSongs->size();
-    //qDebug() << "m_numAlbums = " << m_numAlbums;
+    m_translate = 0.0;
+    m_translateBuffer = 0.0;
 
     /* This for loop essentially converts the QImages passed to the function into
      * GLuints that OpenGL can used to display these images in the coverflow.
@@ -142,14 +137,12 @@ void SquaresWidget::s_MP3Art(QList<QString> *listSongs, QList<QString> *albumlis
         QByteArray ba_temp = listSongs->at(i).toLocal8Bit();
         const char* filepath = ba_temp.data();
         TagLib::MPEG::File audioFile(filepath);
-        //qDebug() << "audioFile created";
         TagLib::ID3v2::Tag *tag = audioFile.ID3v2Tag(true);
-        //qDebug() << "tag created";
         QImage coverArt = imageForTag(tag);
         QImage ResizedArt = coverArt.scaled(250,250,Qt::KeepAspectRatio);
-        //qDebug() << "ResizedArt created";
 
-        //QString temp_string = QString("record %1").arg(i+1);
+        // Converts the image to a GL format and sets tempGLu to represent a
+        // texture that can be used with OpenGL
         GLuint tempGLu;
         glGenTextures(1, &tempGLu);
         glBindTexture(GL_TEXTURE_2D, tempGLu);
@@ -169,7 +162,8 @@ void SquaresWidget::s_MP3Art(QList<QString> *listSongs, QList<QString> *albumlis
     else m_albumsShown = 7;
 }
 
-/* mousePressEvent is a function that will save the x-coordinate and y-coordinate
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * mousePressEvent is a function that will save the x-coordinate and y-coordinate
  * whenever the mouse is clicked on the widget. If the mouse click is on the album
  * that is:
  *  2 albums to the left, then shiftLeft is called twice
@@ -192,7 +186,8 @@ void SquaresWidget::mousePressEvent(QMouseEvent *event){
     }
 }
 
-/* mouseDoubleClickEvent is a function that sets boolean m_doubleClicked to true
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * mouseDoubleClickEvent is a function that sets boolean m_doubleClicked to true
  * if this event takes place horizontally close to the middle of the widget.
  * This corresponds to doubleclicking the center album art.
  */
@@ -200,7 +195,8 @@ void SquaresWidget::mouseDoubleClickEvent(QMouseEvent *event){
     if(event->x() > 0.34*width() && event->x() < 0.66*width()) m_doubleClicked = true;
 }
 
-/* defaultImage loads the default image that will be used when there has not been
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * defaultImage loads the default image that will be used when there has not been
  * any music loaded yet into QTunes.
  */
 void SquaresWidget::defaultImage(){
@@ -222,7 +218,8 @@ void SquaresWidget::defaultImage(){
     glDisable(GL_TEXTURE_2D);
 }
 
-/* initializeGL is a function that sets up the widget to be used. It clears the
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * initializeGL is a function that sets up the widget to be used. It clears the
  * widget of any previous colors, enables the widget to display things in 3D
  * correctly, and enables certain shapes to have smooth lines. initializeGL also
  * calls defaultImage to load the default image to be used as an OpenGL texture.
@@ -234,7 +231,8 @@ void SquaresWidget::initializeGL(){
     defaultImage();
 }
 
-/* resizeGL is a function that sets up the perspective view for the widget.
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * resizeGL is a function that sets up the perspective view for the widget.
  * This function also sets up the camera view, and loads the identity
  * matrix into the widget.
  */
@@ -249,7 +247,8 @@ void SquaresWidget::resizeGL(int w, int h){
 	glLoadIdentity();
 }
 
-/* paintGL is a function that is updated every 16ms in order to properly render
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * paintGL is a function that is updated every 16ms in order to properly render
  * the coverflow. This function creates album coverflow from mp3 files and allows
  * for translation and rotation of the album art loaded.
  * */

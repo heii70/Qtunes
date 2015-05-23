@@ -58,7 +58,7 @@ public slots:
 	void s_panel3(QListWidgetItem*);
 	void s_play  (QTableWidgetItem*);
 	void s_about ();
-	void statusChanged(QMediaPlayer::MediaStatus status);
+    void statusChanged(QMediaPlayer::MediaStatus status);
     void s_playButton();
     void s_pauseButton();
     void s_prevSong();
@@ -85,10 +85,9 @@ private:
 	void createActions();
 	void createMenus  ();
 	void createWidgets();
-	
 	void createButtons();
-	
 	void createLayouts();
+    void signalSlots();
 	void initLists	  ();
 	void redrawLists  (QListWidgetItem *, int);
     void redrawLists  (QList<QString> *, int);
@@ -156,13 +155,14 @@ private:
     QLineEdit *m_searchbox;
     QTableWidgetItem *m_prevItem;
 	
-	SquaresWidget *m_squares;
+    SquaresWidget *m_coverflow;
     QLabel *m_albumLabel;
 	QMediaPlayer *m_mediaplayer;
 	
     QList <QString> *m_albumList;
     QList <QString> *m_pathList;
     QList <QString> *m_fullPathList;
+    QList <QString> *m_fullAlbumlist;
 
     QString ts_styleSheet;
 	// string lists

@@ -45,6 +45,7 @@ public:
     bool eventFilter(QObject *, QEvent *);
     void keyPressEvent(QKeyEvent *);
     bool isSearch;
+    bool isDirectClicked;
     int colorval;
 signals:
     void s_artLoaded(QList<QString> *, QList<QString> *);
@@ -73,6 +74,7 @@ public slots:
     void s_changeSpeed();
     void s_setDuration(qint64);
     void s_playlistUpdate();
+    void s_directClicked(int);
     void s_redrawAlbum(QString);
     void s_albumLabel(QString);
     void s_tableUpdate();
@@ -130,7 +132,7 @@ private:
 	QTableWidget	*m_table;
 
     QTableWidget *m_playlistTable;
-    QTableWidget *m_checkboxTable;
+    QSignalMapper* signalMapper;
     QCheckBox *m_checkbox;
 	QProgressDialog	*m_progressBar;
 	QToolButton	*m_stop;

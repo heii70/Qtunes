@@ -1,14 +1,14 @@
-// ======================================================================
-// IMPROC: Image Processing Software Package
-// Copyright (C) 2015 by George Wolberg
-//
-// MainWindow.cpp - Main Window widget
-//
-// Written by: George Wolberg, 2015
-// Modified by: Matthew Liu, Kenichi Yamamoto, William Gao
-// 				added tag support with TagLib
-//				adding mediplayer functionality using a QMediaPlayer object
-// ======================================================================
+//! ======================================================================
+//! IMPROC: Image Processing Software Package
+//! Copyright (C) 2015 by George Wolberg
+//!
+//! MainWindow.cpp - Main Window widget
+//!
+//! Written by: George Wolberg, 2015
+//! Modified by: Matthew Liu, Kenichi Yamamoto, William Gao
+//! 				added tag support with TagLib
+//!				adding mediplayer functionality using a QMediaPlayer object
+//! ======================================================================
 #include <QTextStream>
 #include <QtWidgets>
 #include <QLabel> 
@@ -43,12 +43,11 @@ bool caseInsensitive(const QString &s1, const QString &s2)
 	return s1.toLower() < s2.toLower();
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::MainWindow:
-//
-// Constructor. Initialize user-interface elements and sets up signal-
-// slot connections.
-//
+//! MainWindow::MainWindow:
+//!
+//! Constructor. Initialize user-interface elements and sets up signal-
+//! slot connections.
+//!
 MainWindow::MainWindow	(QString program)
 	   : m_directory(".")
 {
@@ -101,17 +100,16 @@ MainWindow::MainWindow	(QString program)
 
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::~MainWindow:
-//
+//! MainWindow::~MainWindow:
+//!
+//! Destructor for the MainWindow
 MainWindow::~MainWindow() {}
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::signalSlots:
-//
-// Creates the signal-slot connections for many of the widgets, buttons,
-// etc
-//
+//! MainWindow::signalSlots:
+//!
+//! Creates the signal-slot connections for many of the widgets, buttons,
+//! etc
+//!
 void
 MainWindow::signalSlots(){
     // Connects player control buttons
@@ -162,13 +160,11 @@ MainWindow::signalSlots(){
             SLOT(s_toggle(QMediaPlayer::State)));
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::eventFilter:
-//
-// Registers a left mouse click on the time slider.
-// Used to jump the slider to a new value when clicked.
-//
-
+//! MainWindow::eventFilter:
+//!
+//! Registers a left mouse click on the time slider.
+//! Used to jump the slider to a new value when clicked.
+//!
 bool MainWindow::eventFilter(QObject *object, QEvent *event){
     //If the widget m_timeSlider is clicked, do something
     if(object == m_timeSlider && event->type() == QEvent::MouseButtonPress){
@@ -211,11 +207,10 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event){
     return false;
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::keyPressEvent:
-//
-// Registers a certain keypress within the player and performs an action.
-//
+//! MainWindow::keyPressEvent:
+//!
+//! Registers a certain keypress within the player and performs an action.
+//!
 void MainWindow::keyPressEvent(QKeyEvent *event){
     switch(event->key()){
 
@@ -248,11 +243,10 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
     }
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::createActions:
-//
-// Create actions to associate with menu and toolbar selection.
-//
+//! MainWindow::createActions:
+//!
+//! Create actions to associate with menu and toolbar selection.
+//!
 void
 MainWindow::createActions()
 {
@@ -314,11 +308,10 @@ MainWindow::createActions()
     connect(m_slidercolorAction,SIGNAL(triggered()),this,SLOT(s_cycleSliderColor()));
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::createMenus:
-//
-// Create menus and install in menubar.
-//
+//! MainWindow::createMenus:
+//!
+//! Create menus and install in menubar.
+//!
 void
 MainWindow::createMenus()
 {
@@ -345,11 +338,10 @@ MainWindow::createMenus()
     m_prefMenu->addAction(m_slidercolorAction);
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::createWidgets:
-//
-// Create widgets to put in the layout.
-//
+//! MainWindow::createWidgets:
+//!
+//! Create widgets to put in the layout.
+//!
 void
 MainWindow::createWidgets()
 {
@@ -460,11 +452,10 @@ MainWindow::createWidgets()
     m_fullAlbumlist = new QList<QString>;
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::createButtons:
-//
-// Create buttons to control QTunes
-//
+//! MainWindow::createButtons:
+//!
+//! Create buttons to control QTunes
+//!
 void
 MainWindow::createButtons(){
     // Initialization of the buttons used in QTunes
@@ -517,11 +508,10 @@ MainWindow::createButtons(){
 }
 
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::createLayouts:
-//
-// Create layouts for widgets.
-//
+//! MainWindow::createLayouts:
+//!
+//! Create layouts for widgets.
+//!
 void
 MainWindow::createLayouts()
 {
@@ -657,11 +647,10 @@ MainWindow::createLayouts()
     m_mainWidget ->setLayout(m_mainBox);
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::initLists:
-//
-// Populate lists with data (first time).
-//
+//! MainWindow::initLists:
+//!
+//! Populate lists with data (first time).
+//!
 void
 MainWindow::initLists()
 {
@@ -751,11 +740,10 @@ MainWindow::initLists()
 
 
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::redrawLists:
-//
-// Re-populate lists with data matching item's text in field x.
-//
+//! MainWindow::redrawLists:
+//!
+//! Re-populate lists with data matching item's text in field x.
+//!
 void
 MainWindow::redrawLists(QListWidgetItem *listItem, int x)
 {
@@ -811,13 +799,12 @@ MainWindow::redrawLists(QListWidgetItem *listItem, int x)
     }
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_redrawAlbum:
-//
-// Slot function that is connected to a signal emitted from the coverflow widget
-// the signal will contain a QString that has the name of the album that was
-// double-clicked for filtering
-//
+//! MainWindow::s_redrawAlbum:
+//!
+//! Slot function that is connected to a signal emitted from the coverflow widget
+//! the signal will contain a QString that has the name of the album that was
+//! double-clicked for filtering
+//!
 void
 MainWindow::s_redrawAlbum(QString albumname){
     // Sets albumItem to be a QListWidgetItem with its text set to the
@@ -829,11 +816,10 @@ MainWindow::s_redrawAlbum(QString albumname){
     redrawLists(albumItem,ALBUM);
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::traverseDirs:
-//
-// Traverse all subdirectories and collect filenames into m_listSongs.
-//
+//! MainWindow::traverseDirs:
+//!
+//! Traverse all subdirectories and collect filenames into m_listSongs.
+//!
 void
 MainWindow::traverseDirs(QString path)
 {
@@ -929,11 +915,10 @@ MainWindow::traverseDirs(QString path)
 	return;
 }		
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_load:
-//
-// Slot function for File|Load and for the load music folder button
-//
+//! MainWindow::s_load:
+//!
+//! Slot function for File|Load and for the load music folder button
+//!
 void
 MainWindow::s_load()
 {
@@ -975,11 +960,10 @@ MainWindow::s_load()
 
 
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_panel1:
-//
-// Slot function to adjust data if an item in panel1 (genre) is selected.
-//
+//! MainWindow::s_panel1:
+//!
+//! Slot function to adjust data if an item in panel1 (genre) is selected.
+//!
 void
 MainWindow::s_panel1(QListWidgetItem *item)
 {
@@ -1024,11 +1008,10 @@ MainWindow::s_panel1(QListWidgetItem *item)
 
 
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_panel2:
-//
-// Slot function to adjust data if an item in panel2 (artist) is selected.
-//
+//! MainWindow::s_panel2:
+//!
+//! Slot function to adjust data if an item in panel2 (artist) is selected.
+//!
 void
 MainWindow::s_panel2(QListWidgetItem *item)
 {
@@ -1055,11 +1038,10 @@ MainWindow::s_panel2(QListWidgetItem *item)
 
 
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_panel3:
-//
-// Slot function to adjust data if an item in panel3 (album) is selected.
-//
+//! MainWindow::s_panel3:
+//!
+//! Slot function to adjust data if an item in panel3 (album) is selected.
+//!
 void
 MainWindow::s_panel3(QListWidgetItem *item)
 {
@@ -1068,28 +1050,60 @@ MainWindow::s_panel3(QListWidgetItem *item)
 
 
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_about:
-//
-// Slot function for Help|About
-//
+//! MainWindow::s_about:
+//!
+//! Slot function for Help|About
+//!
 void
 MainWindow::s_about()
 {
-    QMessageBox::about(this, "About QTunes",
+    /*QMessageBox::about(this, "About QTunes",
                 "<center><font size = 18><font color = red><b> QTunes Music Player - Spring 2015 </b></font></center> \
                  <center> Skeleton code provided by George Wolberg </center> \
-                 <center> Coverflow, populating song tables and lists, </center> \
-                 <center>  general QTunes layout, and general TagLib code by Matthew Liu </center> \
-                 <center> Playlist, filters, and toolbar buttons by William Gao </center> \
-                 <center> Visualizer, time/volume slider, playback speed, and tag to qimage code by Kenichi Yamamoto </center>");
+                 <center> Extraction of song metadata using Taglib, implementation of coverflow, </center> \
+                 <center> general layout of QTunes, usage of song metadata to populate lists and song table, </center> \
+                 <center> usage of doxygen for documentation, and various bug fixes by Matthew Liu. </center> \
+                 <center> Implementation of playlist and checkboxes, implementation of qresource, </center> \
+                 <center> general layout of QTunes and edits, and various bug fixes by William Gao </center> \
+                 <center> Implementation of sliders and visualizer, set up keypress events and </center> \
+                 <center> event filters, playback speed options, night mode, grabbing album art </center>\
+                 <center> images, implementation of search bar, and various bug fixes by Kenichi Yamamoto </center>");*/
+    QMessageBox::about(this, "About QTunes",
+               "<center><font size = 18><font color = red><b> QTunes Music Player - Spring 2015 </b></font></center> \
+                Skeleton code provided by George Wolberg<br> \
+                Work distribution<br> \
+                Matthew Liu: \
+                <ul> \
+                <li> extraction of song metadata using Taglib </li> \
+                <li> implementation of coverflow </li> \
+                <li> general layout of QTunes </li> \
+                <li> usage of song metadata to populate lists and song table </li> \
+                <li> usage of doxygen for documentation </li> \
+                <li> various bug fixes</li> \
+                </ul> \
+                William Gao: \
+                <ul> \
+                <li> implementation of playlist and checkboxes </li> \
+                <li> implementation of qresource </li> \
+                <li> general layout of QTunes  and edits </li> \
+                <li> implementation of many of the buttons </li> \
+                <li> various bug fixes</li> \
+                </ul> \
+                Kenichi Yamamoto: \
+                <ul> \
+                <li> implementation of sliders and visualizer </li> \
+                <li> setup of keypress events and event filters </li> \
+                <li> implementation of playback speed options and night mode </li> \
+                <li> grabbing album art images </li> \
+                <li> implementation of search bar </li> \
+                <li> various bug fixes</li> \
+                </ul>");
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_playButton:
-//
-// Slot function for when the play button is pressed
-//
+//! MainWindow::s_playButton:
+//!
+//! Slot function for when the play button is pressed
+//!
 void MainWindow::s_playButton(){
     // If there is no selected item in the song table, nothing happens
     if(m_table->currentItem() == NULL)
@@ -1108,11 +1122,10 @@ void MainWindow::s_playButton(){
     return;
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_prevSong:
-//
-// Slot function for when the previous song button is pressed
-//
+//! MainWindow::s_prevSong:
+//!
+//! Slot function for when the previous song button is pressed
+//!
 void MainWindow::s_prevSong()
 {
     // If there is no selected item in the song table, nothing happens
@@ -1161,11 +1174,10 @@ void MainWindow::s_prevSong()
     }
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_nextSong:
-//
-// Slot function for when the next song button is pressed
-//
+//! MainWindow::s_nextSong:
+//!
+//! Slot function for when the next song button is pressed
+//!
 void MainWindow::s_nextSong(){
     // If there is no selected item in the song table, nothing happens
     if(m_table->currentItem() == NULL)
@@ -1214,54 +1226,49 @@ void MainWindow::s_nextSong(){
     }
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_pauseButton:
-//
-// Slot function for when the pause button is pressed
-//
+//! MainWindow::s_pauseButton:
+//!
+//! Slot function for when the pause button is pressed
+//!
 void MainWindow::s_pauseButton(){
     //Pauses the song
     m_mediaplayer->pause();
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_setVolume:
-//
-// Slot function for when the value of the volume slider is changed
-//
+//! MainWindow::s_setVolume:
+//!
+//! Slot function for when the value of the volume slider is changed
+//!
 void MainWindow::s_setVolume(int Volume){
     //Sets the volume
     m_mediaplayer->setVolume(Volume);
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_setPosition:
-//
-// Slot function for when the position of the currently playing song is changed
-// This will change the value of the time slider to match the new position
-//
+//! MainWindow::s_setPosition:
+//!
+//! Slot function for when the position of the currently playing song is changed
+//! This will change the value of the time slider to match the new position
+//!
 void MainWindow::s_setPosition(qint64 Position){
     //Sets the value of the slider to match the position of the currently playing song
     m_timeSlider->setValue(Position);
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_seek:
-//
-// Slot function for when the value of the time slider is changed
-//
+//! MainWindow::s_seek:
+//!
+//! Slot function for when the value of the time slider is changed
+//!
 void MainWindow::s_seek(int newPosition){
     //Seeks to a new position in the song specified by newPosition
     qint64 position = (qint64)newPosition;
     m_mediaplayer->setPosition(position);
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_updateLabel:
-//
-// Slot function for when the position of the currently playing song is changed
-// This will change the value of the time label to match the new position
-//
+//! MainWindow::s_updateLabel:
+//!
+//! Slot function for when the position of the currently playing song is changed
+//! This will change the value of the time label to match the new position
+//!
 void MainWindow::s_updateLabel(qint64 Time){
     //Get the end time of the currently playing song in minutes and seconds
     int endSecond = ((int)m_mediaplayer->duration() / 1000)%60;
@@ -1298,11 +1305,10 @@ void MainWindow::s_updateLabel(qint64 Time){
     m_timeLabel->setText(timeLabel);
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_changeSpeed:
-//
-// Slot function for actions that change the speed of the song playback
-//
+//! MainWindow::s_changeSpeed:
+//!
+//! Slot function for actions that change the speed of the song playback
+//!
 void MainWindow::s_changeSpeed(){
     //Checks to see which of the playback speed actions is checked and sets the speed.
     //Since they all belong to QActionGroup, only one option can be selected at a time.
@@ -1329,24 +1335,22 @@ void MainWindow::s_changeSpeed(){
     return;
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_setDuration:
-//
-// Slot function for when the duration of the song loaded into m_mediaplayer
-// changes (will change when a new song is loaded)
-//
+//! MainWindow::s_setDuration:
+//!
+//! Slot function for when the duration of the song loaded into m_mediaplayer
+//! changes (will change when a new song is loaded)
+//!
 void MainWindow::s_setDuration(qint64 Duration){
     //Sets the duration of the time slider
     m_timeSlider->setRange(0,Duration);
     return;
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_searchSongs:
-//
-// Slot function when the search button is pressed or when return is pressed
-// when typing things into the search bar
-//
+//! MainWindow::s_searchSongs:
+//!
+//! Slot function when the search button is pressed or when return is pressed
+//! when typing things into the search bar
+//!
 void MainWindow::s_searchSongs(){
     //Intialize variables
     QList<QString> m_listFound;
@@ -1388,12 +1392,11 @@ void MainWindow::s_searchSongs(){
     isSearch = false;
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_toggleNightMode:
-//
-// Slot function for when the night mode action is triggered
-// Will toggle between night mode and normal mode for QTunes
-//
+//! MainWindow::s_toggleNightMode:
+//!
+//! Slot function for when the night mode action is triggered
+//! Will toggle between night mode and normal mode for QTunes
+//!
 void MainWindow::s_toggleNightMode(){
     // If the nightmode action is checked, set the stylesheet of the widgets
     // in MainWindow to a black or dark gray color.
@@ -1494,12 +1497,11 @@ void MainWindow::s_toggleNightMode(){
     }
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_cycleSliderColor:
-//
-// Slot function for when the cycle slider action is triggered
-// This will change the time slider color
-//
+//! MainWindow::s_cycleSliderColor:
+//!
+//! Slot function for when the cycle slider action is triggered
+//! This will change the time slider color
+//!
 void MainWindow::s_cycleSliderColor(){
     // Cycles through the time slider's color in the following order:
     // Red->Orange->Yellow->Green->Blue->Indigo->Pink then back to Red
@@ -1535,13 +1537,12 @@ void MainWindow::s_cycleSliderColor(){
          m_timeSlider->setStyleSheet(m_timeSlider->styleSheet() + ts_styleSheet);
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_setSliderColor:
-//
-// This function sets both the appearance of the time slider as well as the color of the slider's
-// progress. It replaces QString arguments %1, %2, and %3 with hex code color arguments given by
-// QString a, b, and c, respectively.
-//
+//! MainWindow::s_setSliderColor:
+//!
+//! This function sets both the appearance of the time slider as well as the color of the slider's
+//! progress. It replaces QString arguments %1, %2, and %3 with hex code color arguments given by
+//! QString a, b, and c, respectively.
+//!
 void MainWindow::s_setSliderColor(QString a, QString b, QString c){
     // Sets the stylesheet appearance as well as the color of the slider's progress via
     // the color code values passed to it.
@@ -1596,11 +1597,10 @@ void MainWindow::s_setSliderColor(QString a, QString b, QString c){
         }").arg(a,b,c));
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::imageForTag
-//
-// Obtain the cover art for a given track using taglib.
-//
+//! MainWindow::imageForTag
+//!
+//! Obtain the cover art for a given track using taglib.
+//!
 QImage MainWindow::imageForTag(TagLib::ID3v2::Tag *tag)
 {
     QImage image;
@@ -1617,8 +1617,10 @@ QImage MainWindow::imageForTag(TagLib::ID3v2::Tag *tag)
     //front() specifies the cover art of the song
     TagLib::ID3v2::AttachedPictureFrame *frame =
         static_cast<TagLib::ID3v2::AttachedPictureFrame *>(list.front());
+
     //Load the picture from the song's frame into the Qimage, and return it
     image.loadFromData((const uchar *) frame->picture().data(), frame->picture().size());
+
     //If nothing is loaded and the image is Null, we return the default album art
     //since loading a null image can cause QTunes to crash.
     if(image.isNull()){
@@ -1628,12 +1630,11 @@ QImage MainWindow::imageForTag(TagLib::ID3v2::Tag *tag)
     return image;
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_play:
-//
-// Slot function to play an mp3 song.
-// This uses TagLib as well as Qt5's Multimedia module.
-//
+//! MainWindow::s_play:
+//!
+//! Slot function to play an mp3 song.
+//! This uses TagLib as well as Qt5's Multimedia module.
+//!
 void
 MainWindow::s_play(QTableWidgetItem *item)
 {
@@ -1676,11 +1677,10 @@ MainWindow::s_play(QTableWidgetItem *item)
 	}
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::statusChanged:
-//
-// Slot function that is called when the status of m_mediaplayer is changed
-//
+//! MainWindow::statusChanged:
+//!
+//! Slot function that is called when the status of m_mediaplayer is changed
+//!
 void MainWindow::statusChanged(QMediaPlayer::MediaStatus status)
 {
     // If the status of m_mediaplayer is BufferedMedia, then the media is buffered
@@ -1747,11 +1747,10 @@ void MainWindow::statusChanged(QMediaPlayer::MediaStatus status)
     loop.exec();
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_repeat:
-//
-// Slot function for when the repeat button is toggled
-//
+//! MainWindow::s_repeat:
+//!
+//! Slot function for when the repeat button is toggled
+//!
 void MainWindow::s_repeat()
 {
     // Turns off shuffle and adjusts the playlist to only the current
@@ -1794,11 +1793,10 @@ void MainWindow::s_repeat()
     }
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_shuffle:
-//
-// Slot function for when the shuffle button is toggled
-//
+//! MainWindow::s_shuffle:
+//!
+//! Slot function for when the shuffle button is toggled
+//!
 void MainWindow::s_shuffle()
 {
     // Turns off repeat and shuffles the songs in the playlist
@@ -1845,12 +1843,11 @@ void MainWindow::s_shuffle()
     }
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_checkboxSelect:
-//
-// Slot function for when the checkbox that selects or deselects the songs if
-// the song table is toggled
-//
+//! MainWindow::s_checkboxSelect:
+//!
+//! Slot function for when the checkbox that selects or deselects the songs if
+//! the song table is toggled
+//!
 void MainWindow::s_checkboxSelect()
 {
     // User toggled button to select all songs
@@ -1897,11 +1894,10 @@ void MainWindow::s_checkboxSelect()
     }
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_playlistUpdate:
-//
-// Updates playlist with current status of selected or deselected songs
-//
+//! MainWindow::s_playlistUpdate:
+//!
+//! Updates playlist with current status of selected or deselected songs
+//!
 void MainWindow::s_playlistUpdate()
 {
     //Sets text and checkbox to the current song in m_table
@@ -1973,12 +1969,11 @@ void MainWindow::s_playlistUpdate()
     }
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_directClicked:
-//
-// Updates playlist with current status of selected or deselected songs if
-// checkbox is directly clicked
-//
+//! MainWindow::s_directClicked:
+//!
+//! Updates playlist with current status of selected or deselected songs if
+//! checkbox is directly clicked
+//!
 void MainWindow::s_directClicked(int row)
 {
     m_table->setCurrentCell(row,0);
@@ -1987,11 +1982,10 @@ void MainWindow::s_directClicked(int row)
     isDirectClicked = false;
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_tableUpdate:
-//
-// Syncs current song in the playlist with the song in m_table
-//
+//! MainWindow::s_tableUpdate:
+//!
+//! Syncs current song in the playlist with the song in m_table
+//!
 void MainWindow::s_tableUpdate()
 {
     QTableWidgetItem *m_tableItem = new QTableWidgetItem;
@@ -2003,12 +1997,11 @@ void MainWindow::s_tableUpdate()
     m_table->setCurrentCell(i,0);
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// MainWindow::s_albumLabel:
-//
-// Slot function that will set m_albumLabel to the album name passed by
-// the coverflow widget
-//
+//! MainWindow::s_albumLabel:
+//!
+//! Slot function that will set m_albumLabel to the album name passed by
+//! the coverflow widget
+//!
 void MainWindow::s_albumLabel(QString newAlbum){
     m_albumLabel->setText(newAlbum);
 }

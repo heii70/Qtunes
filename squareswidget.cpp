@@ -12,15 +12,14 @@
 #include <id3v2header.h>
 #include <attachedpictureframe.h>
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// SquaresWidget::SquaresWidget
-//
-// SquaresWidget constructor that sets the default values of several
-// variables and initializes the QLists used in this widget. It also
-// initializes a QTimer and connects it such that it will call the slot
-// function update() every 16ms. update() will call updateGL(), which will
-// call paintGL().
-//
+//! SquaresWidget::SquaresWidget
+//!
+//! SquaresWidget constructor that sets the default values of several
+//! variables and initializes the QLists used in this widget. It also
+//! initializes a QTimer and connects it such that it will call the slot
+//! function update() every 16ms. update() will call updateGL(), which will
+//! call paintGL().
+//!
 SquaresWidget::SquaresWidget(){
 	m_width = 3;
 	m_height = 1;
@@ -49,53 +48,49 @@ SquaresWidget::SquaresWidget(){
     connect(m_timer, SIGNAL(timeout()), this, SLOT(update()));
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// SquaresWidget::~SquaresWidget
-//
-// SquaresWidget deconstructor
-//
+//! SquaresWidget::~SquaresWidget
+//!
+//! SquaresWidget deconstructor
+//!
 SquaresWidget::~SquaresWidget(){
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// SquaresWidget::shiftLeft
-//
-// shiftLeft() is a function that increments m_translate by m_shift. This
-// function is called when the mousePressEvent function determines that there
-// is a mouse click on the left side of the widget (this wil be similar to
-// clicking on an album to the left of the center widget). If the coverflow is
-// too far to the left, m_translate will not be incremented.
-//
+//! SquaresWidget::shiftLeft
+//!
+//! shiftLeft() is a function that increments m_translate by m_shift. This
+//! function is called when the mousePressEvent function determines that there
+//! is a mouse click on the left side of the widget (this wil be similar to
+//! clicking on an album to the left of the center widget). If the coverflow is
+//! too far to the left, m_translate will not be incremented.
+//!
 void SquaresWidget::shiftLeft(){
     if(m_numAlbums == 0) return;
     if((int)(-(m_translate-0.01)/m_shift+m_numAlbums/2) <= 0.05) return;
 	m_translate += m_shift;
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// SquaresWidget::shiftRight
-//
-// shiftRight() is a function that decrements m_translate by m_shift. This
-// function is called when the mousePressEvent function determines that there
-// is a mouse click on the right side of the widget (this wil be similar to
-// clicking on an album to the right of the center widget). If the coverflow is
-// too far to the right, m_translate will not be decremented.
-//
+//! SquaresWidget::shiftRight
+//!
+//! shiftRight() is a function that decrements m_translate by m_shift. This
+//! function is called when the mousePressEvent function determines that there
+//! is a mouse click on the right side of the widget (this wil be similar to
+//! clicking on an album to the right of the center widget). If the coverflow is
+//! too far to the right, m_translate will not be decremented.
+//!
 void SquaresWidget::shiftRight(){
     if(m_numAlbums == 0) return;
     if((int)(-(m_translate-0.01)/m_shift+m_numAlbums/2) >= m_numAlbums-1) return;
     m_translate -= m_shift;
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// SquaresWidget::imageForTag
-//
-// imageForTag(TagLib::ID3v2::Tag *tag) is identical to the function
-// in MainWindow.cpp. It takes in an ID3v2 tag and returns a QImage
-// containing the tag's album art. If the list is empty, or the image
-// is null by the end of the function, it will instead return a default
-// image from QResource.
-//
+//! SquaresWidget::imageForTag
+//!
+//! imageForTag(TagLib::ID3v2::Tag *tag) is identical to the function
+//! in MainWindow.cpp. It takes in an ID3v2 tag and returns a QImage
+//! containing the tag's album art. If the list is empty, or the image
+//! is null by the end of the function, it will instead return a default
+//! image from QResource.
+//!
 QImage SquaresWidget::imageForTag(TagLib::ID3v2::Tag *tag){
     QImage image;
     //Creates a framelist from the given tag using "APIC",
@@ -124,16 +119,15 @@ QImage SquaresWidget::imageForTag(TagLib::ID3v2::Tag *tag){
     return image;
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// SquaresWidget::s_MP3Art
-//
-// s_MP3Art is a slot function that is connected to a signal from MainWindow that
-// is emitted when the s_load function is called. It takes in a QList of
-// QImages that is passed to it by MainWindow and appends to a QList of QImages,
-// m_glTexID. m_glTexID contains GLuints that can be used to create the coverflow
-// from. This function also takes in a QList of QStrings that is used to save the
-// name of the QImages that have been passed to this function.
-//
+//! SquaresWidget::s_MP3Art
+//!
+//! s_MP3Art is a slot function that is connected to a signal from MainWindow that
+//! is emitted when the s_load function is called. It takes in a QList of
+//! QImages that is passed to it by MainWindow and appends to a QList of QImages,
+//! m_glTexID. m_glTexID contains GLuints that can be used to create the coverflow
+//! from. This function also takes in a QList of QStrings that is used to save the
+//! name of the QImages that have been passed to this function.
+//!
 void SquaresWidget::s_MP3Art(QList<QString> *listSongs, QList<QString> *albumlist){
     if(listSongs->size() == 0 && albumlist->size() == 0) return;
     const QList<QString> *temp_list(albumlist);
@@ -176,17 +170,16 @@ void SquaresWidget::s_MP3Art(QList<QString> *listSongs, QList<QString> *albumlis
     else m_albumsShown = 7;
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// SquaresWidget::mousePressEvent
-//
-// mousePressEvent is a function that will save the x-coordinate and y-coordinate
-// whenever the mouse is clicked on the widget. If the mouse click is on the album
-// that is:
-//      2 albums to the left, then shiftLeft is called twice
-//      1 album to the left, then shiftLeft is called once
-//      1 album to the right, then shiftRight is called once
-//      2 albums to the right, then shiftRight is called twice
-//
+//! SquaresWidget::mousePressEvent
+//!
+//! mousePressEvent is a function that will save the x-coordinate and y-coordinate
+//! whenever the mouse is clicked on the widget. If the mouse click is on the album
+//! that is:
+//!      2 albums to the left, then shiftLeft is called twice
+//!      1 album to the left, then shiftLeft is called once
+//!      1 album to the right, then shiftRight is called once
+//!      2 albums to the right, then shiftRight is called twice
+//!
 void SquaresWidget::mousePressEvent(QMouseEvent *event){
     m_xpos = event->x();
     m_ypos = event->y();
@@ -202,23 +195,21 @@ void SquaresWidget::mousePressEvent(QMouseEvent *event){
     }
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// SquaresWidget::mouseDoubleClickEvent
-//
-// mouseDoubleClickEvent is a function that sets boolean m_doubleClicked to true
-// if this event takes place horizontally close to the middle of the widget.
-// This corresponds to doubleclicking the center album art.
-//
+//! SquaresWidget::mouseDoubleClickEvent
+//!
+//! mouseDoubleClickEvent is a function that sets boolean m_doubleClicked to true
+//! if this event takes place horizontally close to the middle of the widget.
+//! This corresponds to doubleclicking the center album art.
+//!
 void SquaresWidget::mouseDoubleClickEvent(QMouseEvent *event){
     if(event->x() > 0.34*width() && event->x() < 0.66*width()) m_doubleClicked = true;
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// SquaresWidget::defaultImage
-//
-// defaultImage loads the default image that will be used when there has not been
-// any music loaded yet into QTunes.
-//
+//! SquaresWidget::defaultImage
+//!
+//! defaultImage loads the default image that will be used when there has not been
+//! any music loaded yet into QTunes.
+//!
 void SquaresWidget::defaultImage(){
     QImage def_image, resized_image;
     def_image.load(":/Resources/noload.jpg");
@@ -238,14 +229,13 @@ void SquaresWidget::defaultImage(){
     glDisable(GL_TEXTURE_2D);
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// SquaresWidget::initializeGL
-//
-// initializeGL is a function that sets up the widget to be used. It clears the
-// widget of any previous colors, enables the widget to display things in 3D
-// correctly, and enables certain shapes to have smooth lines. initializeGL also
-// calls defaultImage to load the default image to be used as an OpenGL texture.
-//
+//! SquaresWidget::initializeGL
+//!
+//! initializeGL is a function that sets up the widget to be used. It clears the
+//! widget of any previous colors, enables the widget to display things in 3D
+//! correctly, and enables certain shapes to have smooth lines. initializeGL also
+//! calls defaultImage to load the default image to be used as an OpenGL texture.
+//!
 void SquaresWidget::initializeGL(){
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
@@ -253,13 +243,12 @@ void SquaresWidget::initializeGL(){
     defaultImage();
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// SquaresWidget::resizeGL
-//
-// resizeGL is a function that sets up the perspective view for the widget.
-// This function also sets up the camera view, and loads the identity
-// matrix into the widget.
-//
+//! SquaresWidget::resizeGL
+//!
+//! resizeGL is a function that sets up the perspective view for the widget.
+//! This function also sets up the camera view, and loads the identity
+//! matrix into the widget.
+//!
 void SquaresWidget::resizeGL(int w, int h){
     glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -274,13 +263,12 @@ void SquaresWidget::resizeGL(int w, int h){
 	glLoadIdentity();
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// SquaresWidget::paintGL
-//
-// paintGL is a function that is updated every 16ms in order to properly render
-// the coverflow. This function creates album coverflow from mp3 files and allows
-// for translation and rotation of the album art loaded.
-//
+//! SquaresWidget::paintGL
+//!
+//! paintGL is a function that is updated every 16ms in order to properly render
+//! the coverflow. This function creates album coverflow from mp3 files and allows
+//! for translation and rotation of the album art loaded.
+//!
 void SquaresWidget::paintGL(){
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();

@@ -1,15 +1,15 @@
-// ======================================================================
-// IMPROC: Image Processing Software Package
-// Copyright (C) 2015 by George Wolberg
-//
-// main.cpp - main() function.
-//
-// Written by: George Wolberg, 2015
-// ======================================================================
-
+///////////////////////////////////////////////////////////////////////////////
+///
+/// \code main
+/// \brief Main file that runs QTunes.
+///
+/// This code contains the main function that runs QTunes.
+///
+///////////////////////////////////////////////////////////////////////////////
 #include <QApplication>
 #include "MainWindow.h"
 
+//! The main function just runs QTunes
 int main(int argc, char **argv) {
 	// init variables and application font
 	QString	      program = argv[0];

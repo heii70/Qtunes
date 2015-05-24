@@ -9,6 +9,22 @@
 #include <QOpenGLWidget>
 #include <QMediaPlayer>
 
+///////////////////////////////////////////////////////////////////////////////
+///
+/// \class VisualizerWidget
+/// \brief QTunes Visualizer Widget.
+///
+/// The VisualizerWidget class is used to create the visualizer seen in QTunes.
+/// It is a subclass of the QOpenGLWidget and displays bars that represent
+/// frequency bands of a song being played. These values are, however, randomly
+/// generated (may be connected to frequency data from songs in the future).
+/// The visualizer only updates the values of the bars if QTunes is playing
+/// music. In addition, the visualizer is affected by the current speed of
+/// playback. It can be set to update the values faster or slower based on
+/// what speed is selected.
+///
+///////////////////////////////////////////////////////////////////////////////
+
 class VisualizerWidget : public QOpenGLWidget
 {
     Q_OBJECT

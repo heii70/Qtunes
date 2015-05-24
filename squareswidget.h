@@ -4,6 +4,20 @@
 #include <tag.h>
 #include <id3v2tag.h>
 
+///////////////////////////////////////////////////////////////////////////////
+///
+/// \class SquaresWidget
+/// \brief QTunes Coverflow Widget.
+///
+/// The SquaresWidget class is used to create the coverflow seen in QTunes. It is
+/// a subclass of the QOpenGLWidget and can be used to display the album art of
+/// the songs loaded into QTunes. Users may browse through the album art of their
+/// songs by clicking on the albums to the left or right of coverflow and can
+/// filter the songs displayed by QTunes by double-clicking on the center album
+/// art.
+///
+///////////////////////////////////////////////////////////////////////////////
+
 class SquaresWidget : public QOpenGLWidget
 {
 	Q_OBJECT

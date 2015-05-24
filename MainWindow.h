@@ -1,11 +1,12 @@
-// ======================================================================
-// IMPROC: Image Processing Software Package
-// Copyright (C) 2015 by George Wolberg
-//
-// MainWindow.h - Main Window widget class
-//
-// Written by: George Wolberg, 2015
-// ======================================================================
+//! ======================================================================
+//! IMPROC: Image Processing Software Package
+//! Copyright (C) 2015 by George Wolberg
+//!
+//! MainWindow.h - Main Window widget class
+//!
+//! Written by: George Wolberg, 2015
+//! Edited by: Matthew Liu, Kenichi Yamamoto, and William Gao
+//! ======================================================================
 
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
@@ -24,12 +25,21 @@ class VisualizerWidget;
 ///////////////////////////////////////////////////////////////////////////////
 ///
 /// \class MainWindow
-/// \brief IMPROC main window.
+/// \brief QTunes main window.
 ///
-/// The IMPROC main window consists of three main areas: a tree view
-/// in the top-left corner, an information view directly below the
-/// tree view, and a frame array that takes up the entire right side
-/// of the screen.
+/// QTunes MainWindow
+/// Written by: George Wolberg, 2015
+/// Edited by: Matthew Liu, Kenichi Yamamoto, and William Gao
+/// The QTunes main window contains all the different features in QTunes:
+///			<ul style="list-style-type:circle">
+/// 				<li>music playback</li>
+/// 				<li>coverflow</li>
+/// 				<li>visualizer</li>
+/// 				<li>ability to filter and search for songs</li>
+/// 				<li>night mode</li>
+/// 				<li>playlist functionality</li>
+///				<li>and more</li>
+/// 				</ul>
 ///
 ///////////////////////////////////////////////////////////////////////////////
 

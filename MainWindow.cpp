@@ -1837,12 +1837,14 @@ void MainWindow::s_shuffle()
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::s_checkboxSelect:
 //
-// Slot function for when the checkbox that selects or deselects the songs in
+// Slot function for when the checkbox that selects or deselects the songs if
 // the song table is toggled
 //
 void MainWindow::s_checkboxSelect()
 {
-    // ***NEED COMMENT
+    //User toggled button to select all songs
+    //Change button text to "Deselect" if user decides to deselect later
+    //Set all checkboxes to checked and add songs to playlist as well as enable the repeat and shuffle button if disabled
     if(m_checkboxSelect->isChecked())
     {
         m_playlistTable->setRowCount(0);
@@ -1863,7 +1865,9 @@ void MainWindow::s_checkboxSelect()
         m_shuffle->setEnabled(true);
     }
 
-    // ***NEED COMMENT
+    // User toggled button to deselect all songs
+    //Change button text to "Select" if user decides to select later
+    //Set all checkboxes to unchecked and clears the playlist as well as disables the repeat and shuffle button
     else
     {
         m_checkboxSelect->setText("Select All");

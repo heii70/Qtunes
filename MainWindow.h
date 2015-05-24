@@ -27,9 +27,9 @@ class VisualizerWidget;
 /// \class MainWindow
 /// \brief QTunes main window.
 ///
-/// QTunes MainWindow
-/// Written by: George Wolberg, 2015
-/// Edited by: Matthew Liu, Kenichi Yamamoto, and William Gao
+/// QTunes MainWindow <br>
+/// Written by: George Wolberg, 2015 <br>
+/// Edited by: Matthew Liu, Kenichi Yamamoto, and William Gao<br>
 /// The QTunes main window contains all the different features in QTunes:
 ///			<ul style="list-style-type:circle">
 /// 				<li>music playback</li>

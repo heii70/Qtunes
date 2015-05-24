@@ -35,7 +35,7 @@ private:
     int m_numAlbums, m_width, m_height, m_scale,
         m_xpos, m_ypos, m_albumsShown, m_mainAlbum;
 	QString m_directory;
-	QTimer *m_timer; //automatically resets itself
+    QTimer *m_timer;
     QList<QString> *m_albumList;
     QList<QString> *m_pathList;
     QList<GLuint> *m_glTexID;

@@ -703,19 +703,19 @@ MainWindow::initLists()
 
     // Generates checkbox column in m_table and connects the checkbox to the signalMapper
     for(int i = 0; i < m_table->rowCount(); i++) {
-          QCheckBox* p_checkbox = new QCheckBox;
-          QWidget* p_widget = new QWidget;
+        QCheckBox* p_checkbox = new QCheckBox;
+        QWidget* p_widget = new QWidget;
 
-          QHBoxLayout* p_layout = new QHBoxLayout(p_widget);
-          p_layout->addWidget(p_checkbox);
-          p_layout->setAlignment(Qt::AlignCenter);
-          p_widget->setLayout(p_layout);
+        QHBoxLayout* p_layout = new QHBoxLayout(p_widget);
+        p_layout->addWidget(p_checkbox);
+        p_layout->setAlignment(Qt::AlignCenter);
+        p_widget->setLayout(p_layout);
 
-          m_table->item(i,0)->setText("");
-          m_table->setCellWidget(i,0,p_widget);
+        m_table->item(i,0)->setText("");
+        m_table->setCellWidget(i,0,p_widget);
 
-          connect (p_checkbox, SIGNAL(clicked()), signalMapper, SLOT(map()));
-          signalMapper->setMapping(p_checkbox,i);
+        connect (p_checkbox, SIGNAL(clicked()), signalMapper, SLOT(map()));
+        signalMapper->setMapping(p_checkbox,i);
     }
 
     // Initalizes playlist with all songs and enables buttons
@@ -765,50 +765,50 @@ MainWindow::redrawLists(QListWidgetItem *listItem, int x)
     m_playlistTable->setRowCount(0);
 
     // Copying data to table widget
-	for(int i=0,row=0; i<m_listSongs.size(); i++) {
-		// skip rows whose field doesn't match text
-		if(m_listSongs[i][x] != listItem->text()) continue;
+    for(int i=0,row=0; i<m_listSongs.size(); i++) {
+        // skip rows whose field doesn't match text
+        if(m_listSongs[i][x] != listItem->text()) continue;
 
         // Will insert a row into m_table with the proper data from m_listSongs
-		m_table->insertRow(row);
-		QTableWidgetItem *item[COLS];
-		for(int j=0; j<COLS; j++) {
-			item[j] = new QTableWidgetItem;
-			item[j]->setText(m_listSongs[i][j]);
-			item[j]->setTextAlignment(Qt::AlignCenter);
-			m_table->setItem(row,j,item[j]);
-		}
+        m_table->insertRow(row);
+        QTableWidgetItem *item[COLS];
+        for(int j=0; j<COLS; j++) {
+            item[j] = new QTableWidgetItem;
+            item[j]->setText(m_listSongs[i][j]);
+            item[j]->setTextAlignment(Qt::AlignCenter);
+            m_table->setItem(row,j,item[j]);
+        }
 
         // Incrementing table row index (row <= i)
-		row++;
-	}
+        row++;
+    }
 
-        //Initializes playlist with songs in m_table
-        for(int i = 0; i < m_table->rowCount(); i++)
-        {
-            QTableWidgetItem *playlistItem = new QTableWidgetItem;
-            playlistItem->setText(m_table->item(i,1)->text());
-            m_playlistTable->insertRow(m_playlistTable->rowCount());
-            m_playlistTable->setItem(i,0,playlistItem);
-        }
+    //Initializes playlist with songs in m_table
+    for(int i = 0; i < m_table->rowCount(); i++)
+    {
+        QTableWidgetItem *playlistItem = new QTableWidgetItem;
+        playlistItem->setText(m_table->item(i,1)->text());
+        m_playlistTable->insertRow(m_playlistTable->rowCount());
+        m_playlistTable->setItem(i,0,playlistItem);
+    }
 
-        // Generates checkbox column in m_table and connects the checkbox to the signalMapper
-        for(int i = 0; i < m_table->rowCount(); i++) {
-              QCheckBox* p_checkbox = new QCheckBox;
-              QWidget* p_widget = new QWidget;
-              p_checkbox->setChecked(true);
+    // Generates checkbox column in m_table and connects the checkbox to the signalMapper
+    for(int i = 0; i < m_table->rowCount(); i++) {
+          QCheckBox* p_checkbox = new QCheckBox;
+          QWidget* p_widget = new QWidget;
+          p_checkbox->setChecked(true);
 
-              QHBoxLayout* p_layout = new QHBoxLayout(p_widget);
-              p_layout->addWidget(p_checkbox);
-              p_layout->setAlignment(Qt::AlignCenter);
-              p_widget->setLayout(p_layout);
+          QHBoxLayout* p_layout = new QHBoxLayout(p_widget);
+          p_layout->addWidget(p_checkbox);
+          p_layout->setAlignment(Qt::AlignCenter);
+          p_widget->setLayout(p_layout);
 
-              m_table->item(i,0)->setText("");
-              m_table->setCellWidget(i,0,p_widget);
+          m_table->item(i,0)->setText("");
+          m_table->setCellWidget(i,0,p_widget);
 
-              connect (p_checkbox, SIGNAL(clicked()), signalMapper, SLOT(map()));
-              signalMapper->setMapping(p_checkbox,i);
-        }
+          connect (p_checkbox, SIGNAL(clicked()), signalMapper, SLOT(map()));
+          signalMapper->setMapping(p_checkbox,i);
+    }
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1119,7 +1119,8 @@ void MainWindow::s_prevSong()
     if(m_table->currentItem() == NULL)
             return;
 
-    // If playlist is empty or not being used, backtrack from current song and loop to last song if at beginning
+    // If playlist is empty or not being used, backtrack from current song
+    // and loop to last song if at beginning
     if(m_playlistTable->rowCount() == 0) {
         QTableWidgetItem *temp = m_table->currentItem();
         if(temp->row() == 0)
@@ -1128,7 +1129,10 @@ void MainWindow::s_prevSong()
         m_table->setCurrentItem(temp);
         s_play(m_table->currentItem());
     }
-    else // Songs backtrack from the playlist until first song and the current song in m_table is adjusted to highlight the same song
+
+    // Else, songs backtrack from the playlist until first song and the current
+    // song in m_table are adjusted to highlight the same song
+    else
     {
          int i = 0;
          if(m_playlistTable->currentRow() == 0)
@@ -1167,7 +1171,8 @@ void MainWindow::s_nextSong(){
     if(m_table->currentItem() == NULL)
             return;
 
-    // If playlist is empty or not being used, advance from the current song and loops back to first song if at the last song
+    // If playlist is empty or not being used, advance from the current
+    // song and loops back to first song if at the last song
     if(m_playlistTable->rowCount() == 0)
     {
         QTableWidgetItem *temp = m_table->currentItem();
@@ -1177,7 +1182,10 @@ void MainWindow::s_nextSong(){
         m_table->setCurrentItem(temp);
         s_play(m_table->currentItem());
     }
-    else // Songs advance from the playlist until last song and updates m_table to highlight the same song
+
+    // Else, songs advance from the playlist until last song and updates
+    // m_table to highlight the same song
+    else
     {
         int i = 0;
         if(m_playlistTable->currentRow() == m_playlistTable->rowCount()-1)
@@ -1342,7 +1350,6 @@ void MainWindow::s_setDuration(qint64 Duration){
 void MainWindow::s_searchSongs(){
     //Intialize variables
     QList<QString> m_listFound;
-    m_listFound.clear();
     QString inputstr = m_searchbox->text();
 
     //If there is no text in the searchbox, simply return the unfiltered m_table
@@ -1376,7 +1383,6 @@ void MainWindow::s_searchSongs(){
     //We first clear the table, then we add each of found songs to m_table
     m_table->setRowCount(0);
     for(int i = foundsongs.count() - 1; i >= 0; i--){
-        //qDebug() << m_listFound[i];
         redrawLists(foundsongs.item(i), TITLE);
     }
     isSearch = false;
@@ -1635,7 +1641,8 @@ MainWindow::s_play(QTableWidgetItem *item)
     if(item == NULL)
         return;
 
-    // Plays a new song from pause state if the current song selected isn't the same as before pausing
+    // Plays a new song from pause state if the current song selected isn't the same as
+    // before pausing
     if(m_mediaplayer->state() == 2 && item->row() == m_prevItem->row()){
         m_mediaplayer->play();
         return;
@@ -1697,7 +1704,8 @@ void MainWindow::statusChanged(QMediaPlayer::MediaStatus status)
             m_mediaplayer->play();
     }
 
-    // Songs automatically advance to the next song in m_table after finishing if playlist is not being used
+    // Songs automatically advance to the next song in m_table after finishing if
+    // playlist is not being used
     if(status == QMediaPlayer::EndOfMedia && m_playlistTable->rowCount() == 0)
     {
         QTableWidgetItem* nextItem = new QTableWidgetItem;
@@ -1713,8 +1721,10 @@ void MainWindow::statusChanged(QMediaPlayer::MediaStatus status)
         s_play(m_table->currentItem());
     }
 
-    // Songs automatically advance to the next song in the playlist and the m_table is adjusted to highlight the same song
-    if(status == QMediaPlayer::EndOfMedia && m_playlistTable->currentRow() < m_playlistTable->rowCount())
+    // Songs automatically advance to the next song in the playlist and the
+    // m_table is adjusted to highlight the same song
+    if(status == QMediaPlayer::EndOfMedia && m_playlistTable->currentRow()
+            < m_playlistTable->rowCount())
     {
         if(m_repeat->isChecked()) s_play(m_table->currentItem());
         if(m_playlistTable->currentRow()+1 >= m_playlistTable->rowCount())
@@ -1744,7 +1754,8 @@ void MainWindow::statusChanged(QMediaPlayer::MediaStatus status)
 //
 void MainWindow::s_repeat()
 {
-    // Turns off shuffle and adjusts the playlist to only the current selected song
+    // Turns off shuffle and adjusts the playlist to only the current
+    // selected song
     if(m_repeat->isChecked() == true)
     {
         m_shuffle->setChecked(false);
@@ -1842,9 +1853,10 @@ void MainWindow::s_shuffle()
 //
 void MainWindow::s_checkboxSelect()
 {
-    //User toggled button to select all songs
-    //Change button text to "Deselect" if user decides to deselect later
-    //Set all checkboxes to checked and add songs to playlist as well as enable the repeat and shuffle button if disabled
+    // User toggled button to select all songs
+    // Change button text to "Deselect" if user decides to deselect later
+    // Set all checkboxes to checked and add songs to playlist as well as enable
+    // the repeat and shuffle button if disabled
     if(m_checkboxSelect->isChecked())
     {
         m_playlistTable->setRowCount(0);
@@ -1866,8 +1878,9 @@ void MainWindow::s_checkboxSelect()
     }
 
     // User toggled button to deselect all songs
-    //Change button text to "Select" if user decides to select later
-    //Set all checkboxes to unchecked and clears the playlist as well as disables the repeat and shuffle button
+    // Change button text to "Select" if user decides to select later
+    // Set all checkboxes to unchecked and clears the playlist as well as disables the
+    // repeat and shuffle button
     else
     {
         m_checkboxSelect->setText("Select All");
@@ -1894,9 +1907,11 @@ void MainWindow::s_playlistUpdate()
     //Sets text and checkbox to the current song in m_table
     QTableWidgetItem *playlistItem = new QTableWidgetItem;
     playlistItem->setText(m_table->item(m_table->currentRow(),1)->text());
+
     m_checkbox = m_table->cellWidget(m_table->currentRow(),0)->findChild<QCheckBox *>();
 
-    //Sets checkbox to update only if its column is clicked, otherwise just update the current selected song in m_table
+    //Sets checkbox to update only if its column is clicked, otherwise
+    // just update the current selected song in m_table
     if(m_table->currentColumn() != 0)
     {
         if(m_checkbox->isChecked() == false)
@@ -1912,13 +1927,15 @@ void MainWindow::s_playlistUpdate()
         }
 
         int i = 0;
-        while(m_playlistTable->item(i,0)->text() != m_table->item(m_table->currentRow(),1)->text() && i < m_playlistTable->rowCount())
+        while(m_playlistTable->item(i,0)->text() != m_table->item(m_table->currentRow(),1)->text()
+              && i < m_playlistTable->rowCount())
             i++;
         m_playlistTable->setCurrentCell(i,0);
     }
+
+    // Does not toggle button if directly clicked
     else
     {
-        // Does not toggle button if directly clicked
         if(isDirectClicked == false)
             m_checkbox->toggle();
 
@@ -1941,7 +1958,8 @@ void MainWindow::s_playlistUpdate()
          {
              for(int i = 0; i < m_playlistTable->rowCount(); i++)
              {
-                 if(m_table->item(m_table->currentRow(),1)->text() == m_playlistTable->item(i,0)->text())
+                 if(m_table->item(m_table->currentRow(),1)->text() ==
+                         m_playlistTable->item(i,0)->text())
                  {
                      m_playlistTable->removeRow(i);
                  }
@@ -1958,9 +1976,9 @@ void MainWindow::s_playlistUpdate()
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::s_directClicked:
 //
-// Updates playlist with current status of selected or deselected songs if checkbox is directly clicked
+// Updates playlist with current status of selected or deselected songs if
+// checkbox is directly clicked
 //
-
 void MainWindow::s_directClicked(int row)
 {
     m_table->setCurrentCell(row,0);

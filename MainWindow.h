@@ -167,7 +167,6 @@ private:
     QList <QString> *m_fullAlbumlist;
 
     QString ts_styleSheet;
-	// string lists
 	QString		   m_directory;
 	QStringList	   m_listGenre;
 	QStringList	   m_listArtist;

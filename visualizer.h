@@ -25,7 +25,6 @@ protected:
     void paintGL();
 
 private:
-    //QList<float> *list;
     float numArray[10];
     int m_width, m_height, m_scale;
     QTimer *m_newRandNum;
